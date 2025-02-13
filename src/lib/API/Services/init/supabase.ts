@@ -1,14 +1,10 @@
-import 'server-only';
-
-import { cookies } from 'next/headers';
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
-import { Database } from '../../../../../supabase/types';
-
-//https://github.com/vercel/next.js/issues/45371
-
-//import type { Database } from '@/lib/database.types'
+import { createClient } from '@supabase/supabase-js';
 
 export const SupabaseServerClient = () => {
-  const cookieStore = cookies();
-  return createServerActionClient<Database>({ cookies: () => cookieStore });
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+
+  console.log('supabaseUrl', supabaseUrl);
+
+  return createClient(supabaseUrl, supabaseAnonKey);
 };
