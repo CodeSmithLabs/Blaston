@@ -1,61 +1,76 @@
 'use server';
-import { SupabaseServerClient as supabase } from '@/lib/API/Services/init/supabase';
+import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import config from '@/lib/config/auth';
 import { SupabaseAuthError } from '@/lib/utils/error';
 
 export const SupabaseSignUp = async (email: string, password: string) => {
-  const res = await supabase().auth.signUp({
+  const supabase = SupabaseServerClient();
+  const { data, error } = await supabase.auth.signUp({
     email,
     password
   });
-  return res;
+  if (error) SupabaseAuthError(error);
+  return data;
 };
 
 export const SupabaseSignIn = async (email: string, password: string) => {
-  const res = await supabase().auth.signInWithPassword({
+  const supabase = SupabaseServerClient();
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password
   });
-  return res;
+  if (error) SupabaseAuthError(error);
+  return data;
 };
 
 export const SupabaseSignOut = async () => {
-  const res = await supabase().auth.signOut();
-  if (res.error) SupabaseAuthError(res.error);
-  return res;
+  const supabase = SupabaseServerClient();
+  const { error } = await supabase.auth.signOut();
+  if (error) SupabaseAuthError(error);
+  return true;
 };
 
 export const SupabaseSignInWithGoogle = async () => {
-  const res = await supabase().auth.signInWithOAuth({
+  const supabase = SupabaseServerClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google'
   });
-  return res;
+  if (error) SupabaseAuthError(error);
+  return data;
 };
 
 export const SupabaseSignInWithMagicLink = async (email: string) => {
-  const res = await supabase().auth.signInWithOtp({
+  const supabase = SupabaseServerClient();
+  const { data, error } = await supabase.auth.signInWithOtp({
     email: `${email}`,
     options: {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_DOMAIN}${config.redirects.callback}`
     }
   });
-  return res;
+  if (error) SupabaseAuthError(error);
+  return data;
 };
 
 export const SupabaseUpdateEmail = async (email: string) => {
-  const res = await supabase().auth.updateUser({ email });
-  return res;
+  const supabase = SupabaseServerClient();
+  const { data, error } = await supabase.auth.updateUser({ email });
+  if (error) SupabaseAuthError(error);
+  return data;
 };
 
 export const SupabaseUpdatePassword = async (password: string) => {
-  const res = await supabase().auth.updateUser({ password });
-  return res;
+  const supabase = SupabaseServerClient();
+  const { data, error } = await supabase.auth.updateUser({ password });
+  if (error) SupabaseAuthError(error);
+  return data;
 };
 
 export const SupabaseResetPasswordEmail = async (email: string) => {
+  const supabase = SupabaseServerClient();
   const redirectTo = `${process.env.NEXT_PUBLIC_DOMAIN}${config.redirects.toProfile}`;
-  const res = await supabase().auth.resetPasswordForEmail(email, {
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo
   });
-  return res;
+  if (error) SupabaseAuthError(error);
+  return data;
 };
