@@ -2,6 +2,7 @@
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import config from '@/lib/config/auth';
 import { SupabaseAuthError } from '@/lib/utils/error';
+import { cookies } from 'next/headers';
 
 export const SupabaseSignUp = async (email: string, password: string) => {
   const supabase = SupabaseServerClient();
@@ -19,7 +20,25 @@ export const SupabaseSignIn = async (email: string, password: string) => {
     email,
     password
   });
+
   if (error) SupabaseAuthError(error);
+
+  if (data.session) {
+    cookies().set('sb-access-token', data.session.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/'
+    });
+
+    cookies().set('sb-refresh-token', data.session.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/'
+    });
+  }
+
   return data;
 };
 
@@ -27,6 +46,15 @@ export const SupabaseSignOut = async () => {
   const supabase = SupabaseServerClient();
   const { error } = await supabase.auth.signOut();
   if (error) SupabaseAuthError(error);
+
+  // Clear cookie on sign out
+  cookies().set('sb-access-token', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: -1, // Expire immediately
+    path: '/'
+  });
+
   return true;
 };
 

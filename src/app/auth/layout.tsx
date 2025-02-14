@@ -7,13 +7,13 @@ import config from '@/lib/config/auth';
 import { SupabaseSession } from '@/lib/API/Services/supabase/user';
 
 export default async function AuthLayout({ children }: LayoutProps) {
-  const { data } = await SupabaseSession();
+  const session = await SupabaseSession();
 
   // Reverse Auth Guard
-  if (data?.session) {
+  if (session?.session) {
     redirect(config.redirects.toDashboard);
   }
-  
+
   return (
     <div>
       <header className="p-6 mb-4">
