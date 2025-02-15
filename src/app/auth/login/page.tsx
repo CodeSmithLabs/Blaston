@@ -63,7 +63,6 @@ export default function LoginPage() {
       return;
     }
 
-    // If successful, navigate to the dashboard (or any callback URL)
     router.push(config.redirects.callback);
   };
 

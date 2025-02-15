@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { SupabaseSignUp, SupabaseSignInWithGoogle } from '@/lib/API/Services/supabase/auth';
+import { SupabaseSignUp } from '@/lib/API/Services/supabase/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { authFormSchema, authFormValues } from '@/lib/types/validations';
 import { useForm } from 'react-hook-form';
@@ -57,20 +57,6 @@ export default function AuthForm() {
     router.push(config.redirects.callback);
   };
 
-  const handleGoogleSignIn = async () => {
-    const { error } = await SupabaseSignInWithGoogle();
-
-    if (error) {
-      setError('email', {
-        type: '"root.serverError',
-        message: error.message
-      });
-      setError('password', { type: 'root.serverError' });
-      return;
-    }
-    router.push(config.redirects.callback);
-  };
-
   const togglePasswordVisibility = () => {
     setShowPassword((prevShowPassword) => !prevShowPassword);
   };
@@ -95,7 +81,12 @@ export default function AuthForm() {
                     <FormMessage />
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input {...register('email')} placeholder="Email" {...field} className="bg-background-light dark:bg-background-dark"/>
+                      <Input
+                        {...register('email')}
+                        placeholder="Email"
+                        {...field}
+                        className="bg-background-light dark:bg-background-dark"
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -138,20 +129,6 @@ export default function AuthForm() {
               </Button>
             </form>
           </Form>
-          <div className="space-y-8 mt-8">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-              </div>
-            </div>
-            <Button onClick={handleGoogleSignIn} variant="outline" className="w-full">
-              <Icons.Google />
-              <span className="ml-2 font-semibold">Sign in with Google</span>
-            </Button>
-          </div>
         </CardContent>
         <CardFooter>
           <div className="flex flex-col">
