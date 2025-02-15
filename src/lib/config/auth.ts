@@ -14,7 +14,7 @@ const config = {
     }
   },
   redirects: {
-    toDashboard: '/dashboard/main',
+    toDashboard: '/dashboard/tasks',
     toSubscription: '/dashboard/settings/subscription',
     toBilling: '/dashboard/settings/billing',
     requireAuth: '/auth/auth-required',

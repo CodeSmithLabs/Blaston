@@ -1,4 +1,4 @@
-// dashboard/layout.tsx
+// app/dashboard/layout.tsx
 import SideBar from './_PageSections/SideBar';
 import Header from './_PageSections/Header';
 import { SupabaseSession } from '@/lib/API/Services/supabase/user';
@@ -12,9 +12,8 @@ import { LayoutProps } from '@/lib/types/types';
 export default async function DashboardLayout({ children }: LayoutProps) {
   const sessionResponse = await SupabaseSession();
   const session = sessionResponse?.session;
-  console.log('session:', session);
 
-  // Auth Guard: redirect if there's no valid session
+  // Auth Guard
   if (!session) {
     redirect(config.redirects.requireAuth);
   }
@@ -29,11 +28,11 @@ export default async function DashboardLayout({ children }: LayoutProps) {
   const avatar_url = session?.user?.user_metadata?.avatar_url;
 
   return (
-    <main className="grid md:grid-cols-[auto_1fr]">
+    <main className="grid md:grid-cols-[auto_1fr] min-h-screen bg-gray-100">
       <SideBar />
-      <div>
+      <div className="flex flex-col">
         <Header email={email} display_name={display_name} avatar_url={avatar_url} />
-        <div className="m-6">{children}</div>
+        <div className="p-6">{children}</div>
       </div>
     </main>
   );
