@@ -1,63 +1,149 @@
-<h1 align="center">Welcome to SAAS Starter Kit!
-</h1>
-<p align="center">
-  <img height="auto" width="400px" src="https://user-images.githubusercontent.com/24860061/113771653-839ae180-96d8-11eb-9df5-49a856019be4.png" />
-<p align="center">
-<br />
-<br />
- 
-> Saas Starter Kit is a modern SAAS boilerplate. Save weeks of development time having standard SAAS features implemented for you, and start building your core app right away.
+# LockedIn - Daily Goal Tracker
 
-## 🎛 Tech Stack
+A productivity-focused web application for managing daily goals and tracking progress, built with modern web technologies.
 
-Reactjs, Nextjs, Typescript, Tailwind, Shadcn, Stripe, Supabase
+## Features
 
-## 🧿 Saas Starterkit Pro
+- 🎯 **Goal Management**
+  - Create/edit/delete daily goals
+  - Track completion status
+  - Daily progress reset at midnight
+- 🔄 **Smart Sync**
+  - Local storage for instant access
+  - Automatic Supabase sync at 12:00 WAT
+  - Offline-first approach
+- 📊 **Progress Tracking**
+  - Visual completion indicators
+  - Daily achievement tracking
+  - Historical goal tracking
+- 🔒 **Secure & Reliable**
+  - JWT-based authentication
+  - Secure Supabase backend
+  - Data validation with Zod
+- 🎨 **Modern UI**
+  - Clean, minimalist interface
+  - Responsive design
+  - Instant inline editing
+  - Keyboard-friendly controls
 
-<h3>**Note: Saas Starterkit Pro uses Prisma instead of Supabase</h3>
+## Tech Stack
 
-Saas Starterkit also comes in a Pro version. Get premium marketing pages, multi-tenancy, roles and permissions, team invites, enhanced subscriptions with Lemon Squeezy, and more check it out here:
-<br />
-<br />
-https://www.saasstarterkit.com/
-<br />
+**Frontend**
 
-## ✨ Features
+- Next.js 14 (App Router)
+- React 18
+- TypeScript
+- Tailwind CSS
+- Shadcn UI Components
 
-- ✅ Admin Dashboard
-- ✅ Full Authentication, with Google Social Login
-- ✅ User Profile Management with Email and Username change
-- ✅ User Dashboard
-- ✅ Checkout Pages
-- ✅ Landing and Pricing Page template
-- ✅ Testing Setup with Playwright
-- ✅ CRUD operations
-- ✅ Stripe subscription payments
-- ✅ Lemon Squeezy MoR (Pro version)
-- ✅ Roles and permissions (Pro version)
-- ✅ Team Invites (Pro version)
-- ✅ Multi user apps and multi tenancy (Pro version)
-- ✅ Fully Featured Blog (Pro version)
-- ✅ Event Based Analytics (Pro version)
+**Backend**
 
-## 📜 Docs
+- Supabase (PostgreSQL)
+- Next.js API Routes
 
-The Documentation is available here:
-<br />
-https://www.saasstarterkit.com/docs
+**Utilities**
 
-If there are any questions or something is not covered in the docs, feel free to open a github issue on this repo.
+- Zod (Validation)
+- React Hook Form
+- UUID (Unique IDs)
+- Date-fns (Date handling)
 
-## 💻 Demo
+## Installation
 
-The Demo can be found here:
-<br />
-https://www.saasstarterkit.com/dashboard/test243/main
+1. **Clone repository**
 
-Certain Features have to be disabled or cant be included in the demo.
+   ```bash
+   git clone https://github.com/freedompraise/lockedin.git
+   cd lockedin
+   ```
 
-## 🤝 Contributing
+2. **Install dependencies**
 
-Pull requests are welcome.
+   ```bash
+   yarn install
+   ```
 
-Also If you like this project please ⭐️ the repo to show your support.
+3. **Environment Setup**
+   Create `.env` file:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   ```
+
+## Configuration
+
+1. **Supabase Setup**
+
+   - Create new project at [supabase.com](https://supabase.com)
+   - Create `goals` table:
+     ```sql
+     CREATE TABLE goals (
+       id UUID PRIMARY KEY,
+       goal TEXT NOT NULL,
+       isCompleted BOOLEAN DEFAULT false,
+       lastCompletedDate TEXT,
+       user_id UUID REFERENCES auth.users(id)
+     );
+     ```
+
+2. **Authentication**
+   - Enable Email/Password auth in Supabase
+   - Configure redirect URLs in Supabase Dashboard
+
+## Running the Application
+
+**Development Mode**
+
+```bash
+yarn run dev
+```
+
+**Production Build**
+
+```bash
+yarn run build
+yarn start
+```
+
+## Usage
+
+1. **Authentication**
+
+   - Sign up with email/password
+   - Verify email address (if required)
+
+2. **Managing Goals**
+
+   - Add new goals using input field
+   - Click goals to edit text
+   - Check circle to mark complete
+   - Click remove (🗑️) to delete
+
+3. **Automatic Sync**
+   - Data saves locally immediately
+   - Automatically syncs to Supabase daily at 12:00 WAT
+   - Manual sync coming soon!
+
+## Contributing
+
+Contributions welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes
+4. Push to branch
+5. Open Pull Request
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+Created with ❤️ by [Praise Freedom Dike]
+
+[Report Issue](https://github.com/freedompraise/lockedin/issues)
+
+```
+
+```
