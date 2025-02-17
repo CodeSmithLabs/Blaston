@@ -64,3 +64,24 @@ export const SupabaseSignUp = async (email: string, password: string): Promise<A
 
   return { error: null, data };
 };
+
+// Sign out
+export const SupabaseSignOut = async (): Promise<{ error: { message: string } | null }> => {
+  const supabase = SupabaseServerClient();
+  const { error } = await supabase.auth.signOut();
+
+  // Clear cookies
+  cookies().set('sb-access-token', '', {
+    httpOnly: true,
+    maxAge: 0,
+    path: '/dashboard'
+  });
+
+  cookies().set('sb-refresh-token', '', {
+    httpOnly: true,
+    maxAge: 0,
+    path: '/'
+  });
+
+  return { error };
+};
