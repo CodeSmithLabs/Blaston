@@ -53,10 +53,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-800">
-      <Card className="w-full max-w-md bg-gray-50 shadow-lg">
+    <div className="flex justify-center items-center min-h-screen bg-white">
+      <Card className="w-full max-w-md bg-white border border-black shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl text-gray-800">Login to LockedIn</CardTitle>
+          <CardTitle className="text-2xl text-black">Login to LockedIn</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -67,13 +67,13 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700">Email</FormLabel>
+                    <FormLabel className="text-black">Email</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
                         {...register('email')}
                         {...field}
-                        className="border-gray-300"
+                        className="border-black focus-visible:ring-purple-500"
                       />
                     </FormControl>
                     <FormMessage />
@@ -86,17 +86,17 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700">Password</FormLabel>
+                    <FormLabel className="text-black">Password</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={showPassword ? 'text' : 'password'}
                           {...register('password')}
                           {...field}
-                          className="border-gray-300"
+                          className="border-black focus-visible:ring-purple-500"
                         />
                         <span
-                          className="absolute right-2 top-2 cursor-pointer text-gray-600"
+                          className="absolute right-2 top-2 cursor-pointer text-purple-600"
                           onClick={() => setShowPassword(!showPassword)}
                         >
                           {showPassword ? <Icons.EyeOffIcon /> : <Icons.EyeIcon />}
@@ -111,7 +111,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-lockedin-purple text-white hover:bg-lockedin-purple-dark"
+                className="w-full bg-purple-600 text-white hover:bg-purple-700 hover:text-white"
               >
                 {isSubmitting && <Icons.Spinner className="mr-2 h-4 w-4 animate-spin" />}
                 Sign In
