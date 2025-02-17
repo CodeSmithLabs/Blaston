@@ -1,29 +1,18 @@
-// src/app/auth/login/page.tsx
+// app/auth/login/page.tsx
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Link from 'next/link';
 
 import { SupabaseSignIn } from '@/lib/API/Services/supabase/auth';
+import { authFormSchema, authFormValues } from '@/lib/types/validations';
 import config from '@/lib/config/auth';
 
-// Zod schema for form validation (adjust fields as needed)
-import { authFormSchema, authFormValues } from '@/lib/types/validations';
-
-// UI components
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/Form';
 import { Icons } from '@/components/Icons';
 
@@ -31,7 +20,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
-  // React Hook Form setup
   const form = useForm<authFormValues>({
     resolver: zodResolver(authFormSchema),
     defaultValues: {
@@ -48,12 +36,10 @@ export default function LoginPage() {
     formState: { isSubmitting }
   } = form;
 
-  // On submit, call SupabaseSignIn
   const onSubmit = async (values: authFormValues) => {
     const { data, error } = await SupabaseSignIn(values.email, values.password);
 
     if (error) {
-      // Show the error message in the form
       reset({ email: values.email, password: '' });
       setError('email', {
         type: 'root.serverError',
@@ -63,27 +49,20 @@ export default function LoginPage() {
       return;
     }
 
-    router.push(config.redirects.callback);
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
+    // If success, navigate
+    router.push(config.redirects.toDashboard);
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-lockedin-purple-dark">
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-md bg-white shadow-md">
-        <CardHeader className="p-4 border-b border-gray-200">
-          <CardTitle className="text-2xl text-lockedin-purple-dark">Login to LockedIn</CardTitle>
-          <CardDescription className="text-sm text-gray-500">
-            Enter your email and password below
-          </CardDescription>
+        <CardHeader>
+          <CardTitle className="text-2xl">Login to LockedIn</CardTitle>
         </CardHeader>
-
         <CardContent>
           <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Email Field */}
+              {/* Email */}
               <FormField
                 control={form.control}
                 name="email"
@@ -91,20 +70,13 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="Your Email"
-                        className="border-gray-300"
-                        {...register('email')}
-                        {...field}
-                      />
+                      <Input type="email" {...register('email')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {/* Password Field */}
+              {/* Password */}
               <FormField
                 control={form.control}
                 name="password"
@@ -115,20 +87,14 @@ export default function LoginPage() {
                       <div className="relative">
                         <Input
                           type={showPassword ? 'text' : 'password'}
-                          placeholder="Your Password"
-                          className="border-gray-300 pr-10"
                           {...register('password')}
                           {...field}
                         />
                         <span
-                          className="absolute inset-y-0 right-2 flex items-center cursor-pointer"
-                          onClick={togglePasswordVisibility}
+                          className="absolute right-2 top-2 cursor-pointer"
+                          onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showPassword ? (
-                            <Icons.EyeOffIcon className="h-5 w-5 text-gray-500" />
-                          ) : (
-                            <Icons.EyeIcon className="h-5 w-5 text-gray-500" />
-                          )}
+                          {showPassword ? <Icons.EyeOffIcon /> : <Icons.EyeIcon />}
                         </span>
                       </div>
                     </FormControl>
@@ -137,30 +103,13 @@ export default function LoginPage() {
                 )}
               />
 
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full bg-lockedin-purple hover:bg-lockedin-purple-light text-white"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" disabled={isSubmitting} className="w-full">
                 {isSubmitting && <Icons.Spinner className="mr-2 h-4 w-4 animate-spin" />}
                 Sign In
               </Button>
             </form>
           </Form>
         </CardContent>
-
-        <CardFooter className="flex flex-col items-center gap-2">
-          <p className="text-sm text-gray-600">
-            Don’t have an account?{' '}
-            <Link
-              href="/auth/signup"
-              className="text-lockedin-purple font-semibold hover:underline"
-            >
-              Sign up
-            </Link>
-          </p>
-        </CardFooter>
       </Card>
     </div>
   );
