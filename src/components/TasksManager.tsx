@@ -1,8 +1,9 @@
 // components/TasksManager.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuid } from 'uuid';
+import { TasksAPI } from '@/lib/API/Services/supabase/tasks';
 
 interface Task {
   id: string;
@@ -15,38 +16,44 @@ export default function TasksManager() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newGoal, setNewGoal] = useState('');
 
-  // 1. Load from localStorage on mount
+  // Load from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem('lockedin-tasks');
-    if (stored) {
-      setTasks(JSON.parse(stored));
-    }
+    if (stored) setTasks(JSON.parse(stored));
   }, []);
 
-  // 2. Save to localStorage whenever tasks change
+  // Save to localStorage on changes
   useEffect(() => {
     localStorage.setItem('lockedin-tasks', JSON.stringify(tasks));
   }, [tasks]);
 
-  // 3. Sync with Supabase (async) - call this in intervals or on changes
+  // Automatic sync at 12:00 WAT
   useEffect(() => {
-    const syncToSupabase = async () => {
-      // Example: POST to your API route
-      try {
-        await fetch('/api/tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tasks })
-        });
-      } catch (error) {
-        console.error('Supabase sync error:', error);
-      }
+    const scheduleSync = () => {
+      const now = new Date();
+      const targetTime = new Date();
+      targetTime.setHours(12, 0, 0, 0); // 12:00 WAT
+
+      const timeToSync = targetTime.getTime() - now.getTime();
+      if (timeToSync < 0) return;
+
+      const timeoutId = setTimeout(async () => {
+        await TasksAPI.syncTasks(tasks);
+        // Reset for next day
+        scheduleSync();
+      }, timeToSync);
+
+      return () => clearTimeout(timeoutId);
     };
-    // For MVP, we can call sync on every tasks update or at intervals
-    syncToSupabase();
+
+    scheduleSync();
   }, [tasks]);
 
-  // 4. Create a new task/goal
+  // Add goal with Enter key support
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleAddGoal();
+  };
+
   const handleAddGoal = () => {
     if (!newGoal.trim()) return;
     const newTask: Task = {
@@ -59,8 +66,8 @@ export default function TasksManager() {
     setNewGoal('');
   };
 
-  // 5. Toggle completion, reset daily at midnight logic
-  const toggleCompletion = (id: string) => {
+  // Toggle completion
+  const toggleCompletion = useCallback((id: string) => {
     setTasks((prev) =>
       prev.map((t) => {
         if (t.id === id) {
@@ -75,40 +82,48 @@ export default function TasksManager() {
         return t;
       })
     );
-  };
+  }, []);
 
-  // 6. Edit an existing goal
-  const editGoal = (id: string, updatedGoal: string) => {
+  // Edit goal
+  const editGoal = useCallback((id: string, updatedGoal: string) => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, goal: updatedGoal } : t)));
-  };
+  }, []);
 
-  // 7. Remove a goal
-  const removeGoal = (id: string) => {
+  // Remove goal
+  const removeGoal = useCallback((id: string) => {
     setTasks((prev) => prev.filter((t) => t.id !== id));
-  };
+  }, []);
 
   return (
-    <div>
+    <div className="p-4">
       <div className="flex gap-2 mb-4">
         <input
-          className="border border-gray-300 px-2 py-1 rounded w-full"
+          className="border border-gray-300 px-2 py-1 rounded w-full text-white"
           placeholder="Enter a goal"
           value={newGoal}
           onChange={(e) => setNewGoal(e.target.value)}
+          onKeyDown={handleKeyPress}
         />
-        <button onClick={handleAddGoal} className="bg-lockedin-purple text-white px-4 py-1 rounded">
+        <button
+          onClick={handleAddGoal}
+          className="bg-purple-600 text-white px-4 py-1 rounded hover:bg-purple-700"
+        >
           Add Goal
         </button>
       </div>
 
       <ul className="space-y-2">
         {tasks.map((task) => (
-          <li key={task.id} className="border p-3 rounded flex justify-between items-center">
+          <li
+            key={task.id}
+            className="border p-3 rounded flex justify-between items-center bg-white"
+          >
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={task.isCompleted}
                 onChange={() => toggleCompletion(task.id)}
+                className="accent-purple-600"
               />
               <EditableGoal goal={task.goal} onSave={(val) => editGoal(task.id, val)} />
             </div>
@@ -122,7 +137,7 @@ export default function TasksManager() {
   );
 }
 
-// Inline component for editing goal text
+// EditableGoal Component
 function EditableGoal({ goal, onSave }: { goal: string; onSave: (val: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(goal);
@@ -132,20 +147,28 @@ function EditableGoal({ goal, onSave }: { goal: string; onSave: (val: string) =>
     setEditing(false);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSave();
+  };
+
   if (editing) {
     return (
       <input
-        className="border-b border-gray-300 focus:outline-none bg-transparent"
+        className="border-b border-gray-300 focus:outline-none bg-transparent text-black"
         autoFocus
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onBlur={handleSave}
+        onKeyDown={handleKeyDown}
       />
     );
   }
 
   return (
-    <span onClick={() => setEditing(true)} className="cursor-pointer">
+    <span
+      onClick={() => setEditing(true)}
+      className="cursor-pointer text-black hover:text-purple-600"
+    >
       {goal}
     </span>
   );
