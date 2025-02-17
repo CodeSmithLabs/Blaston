@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import Link from 'next/link';
 
 import { SupabaseSignIn } from '@/lib/API/Services/supabase/auth';
 import { authFormSchema, authFormValues } from '@/lib/types/validations';
@@ -12,7 +13,7 @@ import config from '@/lib/config/auth';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/Form';
 import { Icons } from '@/components/Icons';
 
@@ -52,28 +53,34 @@ export default function LoginPage() {
     router.push(config.redirects.toDashboard);
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword((prevShowPassword) => !prevShowPassword);
+  };
+
   return (
-    <div className="flex justify-center items-center min-h-screen bg-white">
-      <Card className="w-full max-w-md bg-white border border-black shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl text-black">Login to LockedIn</CardTitle>
+    <div className="md:w-96">
+      <Card className="bg-background-light dark:bg-background-dark">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl">Login to LockedIn</CardTitle>
+          <CardDescription>Enter your email and password below to login to your account</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
               {/* Email */}
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-black">Email</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
                         {...register('email')}
+                        placeholder="Email"
                         {...field}
-                        className="border-black focus-visible:ring-purple-500"
+                        className="bg-background-light dark:bg-background-dark"
                       />
                     </FormControl>
                     <FormMessage />
@@ -86,21 +93,23 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-black">Password</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={showPassword ? 'text' : 'password'}
                           {...register('password')}
+                          placeholder="Password"
                           {...field}
-                          className="border-black focus-visible:ring-purple-500"
+                          className="bg-background-light dark:bg-background-dark"
                         />
-                        <span
-                          className="absolute right-2 top-2 cursor-pointer text-purple-600"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? <Icons.EyeOffIcon /> : <Icons.EyeIcon />}
-                        </span>
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 cursor-pointer">
+                          {showPassword ? (
+                            <Icons.EyeOffIcon className="h-6 w-6" onClick={togglePasswordVisibility} />
+                          ) : (
+                            <Icons.EyeIcon className="h-6 w-6" onClick={togglePasswordVisibility} />
+                          )}
+                        </div>
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -108,17 +117,24 @@ export default function LoginPage() {
                 )}
               />
 
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-purple-600 text-white hover:bg-purple-700 hover:text-white"
-              >
+              <Button className="w-full" disabled={isSubmitting}>
                 {isSubmitting && <Icons.Spinner className="mr-2 h-4 w-4 animate-spin" />}
+                <Icons.Lock className="mr-2 h-4 w-4" />
                 Sign In
               </Button>
             </form>
           </Form>
         </CardContent>
+        <CardFooter>
+          <div className="flex flex-col">
+            <div className="text-center text-sm text-gray-500">
+              Don&apos;t have an account?{' '}
+              <Link href="/auth/signup" className="leading-7 text-indigo-600 hover:text-indigo-500">
+                Sign up here.
+              </Link>
+            </div>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );
