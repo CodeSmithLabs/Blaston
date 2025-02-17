@@ -32,7 +32,7 @@ export default function Header({ email, display_name, avatar_url }: HeaderProps)
 
   return (
     <header className="flex items-center justify-between bg-lockedin-purple p-4 text-white">
-      <h1 className="text-lg font-semibold">LockedIn Dashboard</h1>
+      <h1 className="text-lg font-semibold">Tasks</h1>
       <div className="flex items-center gap-4">
         <span>{display_name || email}</span>
         {avatar_url && (
