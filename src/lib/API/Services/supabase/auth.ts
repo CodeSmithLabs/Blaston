@@ -4,7 +4,8 @@
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import { cookies } from 'next/headers';
 
-type SignInResult = {
+// A single type covering both sign-in and sign-up results
+type AuthResult = {
   error: { message: string } | null;
   data: {
     user: any;
@@ -12,7 +13,27 @@ type SignInResult = {
   } | null;
 };
 
-export const SupabaseSignIn = async (email: string, password: string): Promise<SignInResult> => {
+// DRY helper to set session cookies
+function storeSessionCookies(session: any) {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  cookies().set('sb-access-token', session.access_token, {
+    httpOnly: true,
+    secure: isProduction,
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    path: '/dashboard'
+  });
+
+  cookies().set('sb-refresh-token', session.refresh_token, {
+    httpOnly: true,
+    secure: isProduction,
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    path: '/'
+  });
+}
+
+// Sign in with email/password
+export const SupabaseSignIn = async (email: string, password: string): Promise<AuthResult> => {
   const supabase = SupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -21,20 +42,24 @@ export const SupabaseSignIn = async (email: string, password: string): Promise<S
   }
 
   if (data.session) {
-    const isProduction = process.env.NODE_ENV === 'production';
-    cookies().set('sb-access-token', data.session.access_token, {
-      httpOnly: true,
-      secure: isProduction, // Only secure if in production
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/dashboard'
-    });
+    storeSessionCookies(data.session);
+  }
 
-    cookies().set('sb-refresh-token', data.session.refresh_token, {
-      httpOnly: true,
-      secure: isProduction,
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/'
-    });
+  return { error: null, data };
+};
+
+// Sign up with email/password and auto-login if successful
+export const SupabaseSignUp = async (email: string, password: string): Promise<AuthResult> => {
+  const supabase = SupabaseServerClient();
+  const { data, error } = await supabase.auth.signUp({ email, password });
+
+  if (error) {
+    return { error, data: null };
+  }
+
+  // If Supabase returns a session, store cookies to log user in
+  if (data.session) {
+    storeSessionCookies(data.session);
   }
 
   return { error: null, data };
