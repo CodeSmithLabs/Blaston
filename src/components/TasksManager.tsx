@@ -16,45 +16,50 @@ export default function TasksManager() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newGoal, setNewGoal] = useState('');
 
-  // Load from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem('lockedin-tasks');
-    if (stored) setTasks(JSON.parse(stored));
+    if (stored) {
+      setTasks(JSON.parse(stored));
+    }
   }, []);
 
-  // Save to localStorage on changes
   useEffect(() => {
     localStorage.setItem('lockedin-tasks', JSON.stringify(tasks));
   }, [tasks]);
 
-  // Automatic sync at 12:00 WAT
+  // Schedule a reset + sync at midnight local time
   useEffect(() => {
-    const scheduleSync = () => {
+    function scheduleMidnightReset() {
       const now = new Date();
-      const targetTime = new Date();
-      targetTime.setHours(12, 0, 0, 0); // 12:00 WAT
+      const midnight = new Date();
+      midnight.setHours(0, 0, 0, 0);
+      if (midnight <= now) {
+        midnight.setDate(midnight.getDate() + 1);
+      }
 
-      const timeToSync = targetTime.getTime() - now.getTime();
-      if (timeToSync < 0) return;
+      const timeToMidnight = midnight.getTime() - now.getTime();
 
-      const timeoutId = setTimeout(async () => {
-        await TasksAPI.syncTasks(tasks);
-        // Reset for next day
-        scheduleSync();
-      }, timeToSync);
+      const timeoutId = setTimeout(() => {
+        setTasks((prev) => {
+          const resetTasks = prev.map((t) => ({
+            ...t,
+            isCompleted: false,
+            lastCompletedDate: ''
+          }));
+          localStorage.setItem('lockedin-tasks', JSON.stringify(resetTasks));
+          TasksAPI.syncTasks(resetTasks);
+          return resetTasks;
+        });
+        scheduleMidnightReset();
+      }, timeToMidnight);
 
       return () => clearTimeout(timeoutId);
-    };
+    }
 
-    scheduleSync();
-  }, [tasks]);
+    scheduleMidnightReset();
+  }, []);
 
-  // Add goal with Enter key support
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleAddGoal();
-  };
-
-  const handleAddGoal = () => {
+  const handleAddGoal = useCallback(() => {
     if (!newGoal.trim()) return;
     const newTask: Task = {
       id: uuid(),
@@ -64,9 +69,12 @@ export default function TasksManager() {
     };
     setTasks((prev) => [...prev, newTask]);
     setNewGoal('');
+  }, [newGoal]);
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleAddGoal();
   };
 
-  // Toggle completion
   const toggleCompletion = useCallback((id: string) => {
     setTasks((prev) =>
       prev.map((t) => {
@@ -84,12 +92,10 @@ export default function TasksManager() {
     );
   }, []);
 
-  // Edit goal
   const editGoal = useCallback((id: string, updatedGoal: string) => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, goal: updatedGoal } : t)));
   }, []);
 
-  // Remove goal
   const removeGoal = useCallback((id: string) => {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   }, []);
@@ -98,7 +104,7 @@ export default function TasksManager() {
     <div className="p-4">
       <div className="flex gap-2 mb-4">
         <input
-          className="border border-gray-300 px-2 py-1 rounded w-full text-white"
+          className="border border-gray-300 px-2 py-1 rounded w-full"
           placeholder="Enter a goal"
           value={newGoal}
           onChange={(e) => setNewGoal(e.target.value)}
@@ -137,7 +143,6 @@ export default function TasksManager() {
   );
 }
 
-// EditableGoal Component
 function EditableGoal({ goal, onSave }: { goal: string; onSave: (val: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(goal);
