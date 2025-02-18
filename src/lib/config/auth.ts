@@ -1,3 +1,5 @@
+// config/auth.ts
+
 const config = {
   routes: {
     login: {
@@ -22,7 +24,8 @@ const config = {
     callback: '/api/auth-callback',
     toProfile: '/dashboard/settings/profile',
     requireSub: '/dashboard/settings/subscription-required',
-    toAddSub: '/dashboard/settings/add-subscription'
+    toAddSub: '/dashboard/settings/add-subscription',
+    checkEmail: '/auth/check-email'
   }
 };
 

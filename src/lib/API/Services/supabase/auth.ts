@@ -48,18 +48,20 @@ export const SupabaseSignIn = async (email: string, password: string): Promise<A
   return { error: null, data };
 };
 
-// Sign up with email/password and auto-login if successful
 export const SupabaseSignUp = async (email: string, password: string): Promise<AuthResult> => {
   const supabase = SupabaseServerClient();
-  const { data, error } = await supabase.auth.signUp({ email, password });
+
+  // Add the redirect option
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: 'https://lockedin-xi.vercel.app/auth/auth-confirm'
+    }
+  });
 
   if (error) {
     return { error, data: null };
-  }
-
-  // If Supabase returns a session, store cookies to log user in
-  if (data.session) {
-    storeSessionCookies(data.session);
   }
 
   return { error: null, data };
