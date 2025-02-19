@@ -1,19 +1,27 @@
+'use client';
+
 import Link from 'next/link';
 
 export default function SideBar() {
   return (
-    <aside className="bg-lockedin-purple-dark text-white w-64 min-h-screen hidden md:block">
-      <div className="p-4">
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b border-border">
         <img src="/logo.png" alt="LockedIn" className="w-32" />
       </div>
-      <nav className="mt-6 flex flex-col gap-4">
-        <Link href="/dashboard/tasks" className="px-4 py-2 hover:bg-lockedin-purple-light">
+      <nav className="mt-4 flex flex-col gap-2">
+        <Link
+          href="/dashboard/tasks"
+          className="px-4 py-2 hover:bg-muted hover:text-muted-foreground transition-colors"
+        >
           Dashboard
         </Link>
-        <Link href="/dashboard/tasks" className="px-4 py-2 hover:bg-lockedin-purple-light">
+        <Link
+          href="/dashboard/tasks"
+          className="px-4 py-2 hover:bg-muted hover:text-muted-foreground transition-colors"
+        >
           My Tasks
         </Link>
       </nav>
-    </aside>
+    </div>
   );
 }
