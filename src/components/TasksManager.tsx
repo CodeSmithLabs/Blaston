@@ -3,60 +3,24 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuid } from 'uuid';
-import { TasksAPI } from '@/lib/API/Services/supabase/tasks';
-
-interface Task {
-  id: string;
-  goal: string;
-  isCompleted: boolean;
-  lastCompletedDate?: string;
-}
+import { TasksAPI, Task } from '@/lib/API/Services/supabase/tasks';
 
 export default function TasksManager() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newGoal, setNewGoal] = useState('');
 
   useEffect(() => {
-    const stored = localStorage.getItem('lockedin-tasks');
-    if (stored) {
-      setTasks(JSON.parse(stored));
-    }
+    const loaded = TasksAPI.loadTasks();
+    setTasks(loaded);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('lockedin-tasks', JSON.stringify(tasks));
+    TasksAPI.saveTasks(tasks);
   }, [tasks]);
 
-  // Reset + sync at midnight local time
   useEffect(() => {
-    function scheduleMidnightReset() {
-      const now = new Date();
-      const midnight = new Date();
-      midnight.setHours(0, 0, 0, 0);
-      if (midnight <= now) {
-        midnight.setDate(midnight.getDate() + 1);
-      }
-
-      const timeToMidnight = midnight.getTime() - now.getTime();
-
-      const timeoutId = setTimeout(() => {
-        setTasks((prev) => {
-          const resetTasks = prev.map((t) => ({
-            ...t,
-            isCompleted: false,
-            lastCompletedDate: ''
-          }));
-          localStorage.setItem('lockedin-tasks', JSON.stringify(resetTasks));
-          TasksAPI.syncTasks(resetTasks);
-          return resetTasks;
-        });
-        scheduleMidnightReset();
-      }, timeToMidnight);
-
-      return () => clearTimeout(timeoutId);
-    }
-
-    scheduleMidnightReset();
+    const cleanup = TasksAPI.scheduleMidnightReset(setTasks);
+    return cleanup;
   }, []);
 
   const handleAddGoal = useCallback(() => {
@@ -101,7 +65,7 @@ export default function TasksManager() {
   }, []);
 
   return (
-    <div className="bg-card text-card-foreground relative">
+    <div className="bg-card text-card-foreground relative p-4">
       <div className="flex gap-2 mb-4 z-5">
         <input
           className="border border-border bg-input text-foreground px-2 py-1 rounded w-full focus:outline-none focus:ring-2 focus:ring-ring"

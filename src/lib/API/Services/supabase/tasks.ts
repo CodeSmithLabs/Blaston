@@ -1,10 +1,64 @@
 // lib/API/Services/supabase/tasks.ts
-'use server';
+'use client'; // because we need localStorage and setTimeout in the browser
 
-import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
+export interface Task {
+  id: string;
+  goal: string;
+  isCompleted: boolean;
+  lastCompletedDate?: string;
+}
+
+function resetTasks(tasks: Task[]): Task[] {
+  return tasks.map((t) => ({
+    ...t,
+    isCompleted: false,
+    lastCompletedDate: ''
+  }));
+}
 
 export const TasksAPI = {
-  syncTasks: async (tasks: any[]) => {
+  loadTasks: (): Task[] => {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem('lockedin-tasks');
+    return stored ? JSON.parse(stored) : [];
+  },
+
+  saveTasks: (tasks: Task[]) => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('lockedin-tasks', JSON.stringify(tasks));
+  },
+
+  scheduleMidnightReset: (setTasks: React.Dispatch<React.SetStateAction<Task[]>>) => {
+    function schedule() {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(0, 0, 0, 0);
+
+      // If it's already past midnight, move to the next day
+      if (midnight <= now) {
+        midnight.setDate(midnight.getDate() + 1);
+      }
+
+      const timeToMidnight = midnight.getTime() - now.getTime();
+
+      const timeoutId = setTimeout(() => {
+        setTasks((prev) => {
+          const reset = resetTasks(prev);
+          TasksAPI.saveTasks(reset);
+          TasksAPI.syncTasks(reset);
+          return reset;
+        });
+        schedule();
+      }, timeToMidnight);
+
+      return timeoutId;
+    }
+
+    const timeoutId = schedule();
+    return () => clearTimeout(timeoutId);
+  },
+
+  syncTasks: async (tasks: Task[]) => {
     try {
       const response = await fetch('/api/tasks', {
         method: 'POST',
@@ -16,7 +70,5 @@ export const TasksAPI = {
       console.error('Sync error:', error);
       return { error: 'Sync failed' };
     }
-  },
-
-  manualSync: async (tasks: any[]) => {}
+  }
 };
