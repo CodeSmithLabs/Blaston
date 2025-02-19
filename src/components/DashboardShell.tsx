@@ -24,7 +24,7 @@ export default function DashboardShell({ displayName, email, children }: Dashboa
           fixed md:static
           z-50
           transition-transform duration-300
-          bg-card/40 md:bg-card text-card-foreground
+          bg-card/60 md:bg-card text-card-foreground
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
         onClick={(e) => e.stopPropagation()}
@@ -34,7 +34,7 @@ export default function DashboardShell({ displayName, email, children }: Dashboa
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 md:hidden"
+          className="fixed inset-0 bg-black/30 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
