@@ -27,7 +27,7 @@ export default function TasksManager() {
     localStorage.setItem('lockedin-tasks', JSON.stringify(tasks));
   }, [tasks]);
 
-  // Schedule a reset + sync at midnight local time
+  // Reset + sync at midnight local time
   useEffect(() => {
     function scheduleMidnightReset() {
       const now = new Date();
@@ -101,10 +101,10 @@ export default function TasksManager() {
   }, []);
 
   return (
-    <div className="p-4">
-      <div className="flex gap-2 mb-4 z-10">
+    <div className="p-4 bg-card text-card-foreground relative">
+      <div className="flex gap-2 mb-4 z-5">
         <input
-          className="border border-gray-300 px-2 py-1 rounded w-full"
+          className="border border-border bg-input text-foreground px-2 py-1 rounded w-full focus:outline-none focus:ring-2 focus:ring-ring"
           placeholder="Enter a goal"
           value={newGoal}
           onChange={(e) => setNewGoal(e.target.value)}
@@ -112,7 +112,7 @@ export default function TasksManager() {
         />
         <button
           onClick={handleAddGoal}
-          className="bg-purple-600 text-white px-4 py-1 rounded hover:bg-purple-700"
+          className="bg-primary text-primary-foreground px-4 py-1 rounded hover:bg-primary/90 transition-colors"
         >
           Add Goal
         </button>
@@ -122,18 +122,21 @@ export default function TasksManager() {
         {tasks.map((task) => (
           <li
             key={task.id}
-            className="border p-3 rounded flex justify-between items-center bg-white"
+            className="border border-border p-3 rounded flex justify-between items-center bg-card text-foreground"
           >
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={task.isCompleted}
                 onChange={() => toggleCompletion(task.id)}
-                className="accent-purple-600"
+                className="accent-primary"
               />
               <EditableGoal goal={task.goal} onSave={(val) => editGoal(task.id, val)} />
             </div>
-            <button onClick={() => removeGoal(task.id)} className="text-red-500 hover:text-red-700">
+            <button
+              onClick={() => removeGoal(task.id)}
+              className="text-destructive hover:text-destructive-foreground transition-colors"
+            >
               Remove
             </button>
           </li>
@@ -159,7 +162,7 @@ function EditableGoal({ goal, onSave }: { goal: string; onSave: (val: string) =>
   if (editing) {
     return (
       <input
-        className="border-b border-gray-300 focus:outline-none bg-transparent text-black"
+        className="border-b border-border focus:outline-none bg-transparent text-foreground"
         autoFocus
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -172,7 +175,7 @@ function EditableGoal({ goal, onSave }: { goal: string; onSave: (val: string) =>
   return (
     <span
       onClick={() => setEditing(true)}
-      className="cursor-pointer text-black hover:text-purple-600"
+      className="cursor-pointer text-foreground hover:text-primary transition-colors"
     >
       {goal}
     </span>
