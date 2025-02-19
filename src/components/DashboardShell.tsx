@@ -12,7 +12,7 @@ interface DashboardShellProps {
 }
 
 export default function DashboardShell({ displayName, email, children }: DashboardShellProps) {
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -20,11 +20,11 @@ export default function DashboardShell({ displayName, email, children }: Dashboa
     <div className="flex min-h-screen bg-background text-foreground relative">
       <aside
         className={`
-          bg-card text-card-foreground
           transform top-0 left-0 w-64 h-full
           fixed md:static
           z-50
           transition-transform duration-300
+          bg-card/40 md:bg-card text-card-foreground
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
         onClick={(e) => e.stopPropagation()}
@@ -34,7 +34,7 @@ export default function DashboardShell({ displayName, email, children }: Dashboa
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/30 md:hidden"
+          className="fixed inset-0 bg-black/60 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
