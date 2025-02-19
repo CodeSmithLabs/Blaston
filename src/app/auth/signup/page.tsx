@@ -54,7 +54,7 @@ export default function AuthForm() {
 
       return;
     }
-    router.push(config.redirects.callback);
+    router.push(config.redirects.checkEmail);
   };
 
   const togglePasswordVisibility = () => {
