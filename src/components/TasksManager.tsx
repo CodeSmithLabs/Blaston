@@ -102,7 +102,7 @@ export default function TasksManager() {
 
   return (
     <div className="p-4">
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 z-10">
         <input
           className="border border-gray-300 px-2 py-1 rounded w-full"
           placeholder="Enter a goal"
