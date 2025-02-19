@@ -101,7 +101,7 @@ export default function TasksManager() {
   }, []);
 
   return (
-    <div className="p-4 bg-card text-card-foreground relative">
+    <div className="bg-card text-card-foreground relative">
       <div className="flex gap-2 mb-4 z-5">
         <input
           className="border border-border bg-input text-foreground px-2 py-1 rounded w-full focus:outline-none focus:ring-2 focus:ring-ring"
