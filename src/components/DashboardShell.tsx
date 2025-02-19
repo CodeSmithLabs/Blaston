@@ -34,7 +34,7 @@ export default function DashboardShell({ displayName, email, children }: Dashboa
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/30 md:hidden"
+          className="fixed inset-0 bg-black/60 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
