@@ -18,9 +18,16 @@ export const SupabaseSession = async () => {
     }
 
     if (userData?.user) {
+      const { data: profileData } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userData.user.id)
+        .single();
+
       return {
         session: {
-          user: userData.user
+          user: userData.user,
+          profile: profileData
         }
       };
     }
@@ -40,5 +47,23 @@ export const SupabaseUser = async () => {
   const { data, error } = await supabase.auth.getUser();
   if (error) SupabaseAuthError(error);
 
-  return data?.user;
+  if (data?.user) {
+    // Double-check table name & columns
+    const { data: profileData, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+
+    if (profileError) {
+      throw new Error(profileError.message);
+    }
+
+    return {
+      ...data.user,
+      profile: profileData
+    };
+  }
+
+  return null;
 };

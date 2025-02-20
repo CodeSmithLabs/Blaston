@@ -1,5 +1,5 @@
 // lib/API/Services/supabase/tasks.ts
-'use client'; // because we need localStorage and setTimeout in the browser
+'use client';
 
 export interface Task {
   id: string;
@@ -28,16 +28,15 @@ export const TasksAPI = {
     localStorage.setItem('lockedin-tasks', JSON.stringify(tasks));
   },
 
-  scheduleMidnightReset: (setTasks: React.Dispatch<React.SetStateAction<Task[]>>) => {
+  scheduleMidnightReset: (
+    setTasks: React.Dispatch<React.SetStateAction<Task[]>>,
+    userId: string
+  ) => {
     function schedule() {
       const now = new Date();
       const midnight = new Date();
       midnight.setHours(0, 0, 0, 0);
-
-      // If it's already past midnight, move to the next day
-      if (midnight <= now) {
-        midnight.setDate(midnight.getDate() + 1);
-      }
+      if (midnight <= now) midnight.setDate(midnight.getDate() + 1);
 
       const timeToMidnight = midnight.getTime() - now.getTime();
 
@@ -45,7 +44,7 @@ export const TasksAPI = {
         setTasks((prev) => {
           const reset = resetTasks(prev);
           TasksAPI.saveTasks(reset);
-          TasksAPI.syncTasks(reset);
+          TasksAPI.syncTasks(reset, userId);
           return reset;
         });
         schedule();
@@ -58,12 +57,12 @@ export const TasksAPI = {
     return () => clearTimeout(timeoutId);
   },
 
-  syncTasks: async (tasks: Task[]) => {
+  syncTasks: async (tasks: Task[], userId: string) => {
     try {
       const response = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tasks })
+        body: JSON.stringify({ tasks, userId })
       });
       return await response.json();
     } catch (error) {

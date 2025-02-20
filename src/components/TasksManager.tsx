@@ -8,20 +8,39 @@ import { TasksAPI, Task } from '@/lib/API/Services/supabase/tasks';
 export default function TasksManager() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newGoal, setNewGoal] = useState('');
+  const [user, setUser] = useState<any>(null);
 
+  // Fetch user from API route
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch('/api/user', { credentials: 'include' });
+        const data = await res.json();
+        setUser(data.user);
+      } catch (error) {
+        console.error('Failed to load user:', error);
+      }
+    }
+    fetchUser();
+  }, []);
+
+  // Load tasks from local storage
   useEffect(() => {
     const loaded = TasksAPI.loadTasks();
     setTasks(loaded);
   }, []);
 
+  // Save tasks to local storage
   useEffect(() => {
     TasksAPI.saveTasks(tasks);
   }, [tasks]);
 
+  // Schedule midnight reset if user is available
   useEffect(() => {
-    const cleanup = TasksAPI.scheduleMidnightReset(setTasks);
+    if (!user?.id) return;
+    const cleanup = TasksAPI.scheduleMidnightReset(setTasks, user.id);
     return cleanup;
-  }, []);
+  }, [user?.id]);
 
   const handleAddGoal = useCallback(() => {
     if (!newGoal.trim()) return;
