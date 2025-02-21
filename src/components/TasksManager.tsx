@@ -84,7 +84,7 @@ export default function TasksManager() {
   }, []);
 
   return (
-    <div className="bg-card text-card-foreground relative">
+    <div className="text-card-foreground relative">
       <div className="flex gap-2 mb-4 z-5">
         <input
           className="border border-border bg-input text-foreground px-2 py-1 rounded w-full focus:outline-none focus:ring-2 focus:ring-ring"
@@ -95,7 +95,7 @@ export default function TasksManager() {
         />
         <button
           onClick={handleAddGoal}
-          className="bg-primary text-accent-foreground px-4 py-1 rounded hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+          className="text-accent-foreground px-4 py-1 rounded hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring font-serif bg-accent"
         >
           Add Goal
         </button>
