@@ -83,12 +83,17 @@ function EditableDisplayName({
   const handleSave = async () => {
     setEditing(false);
     try {
-      await fetch('/api/user', {
+      const res = await fetch('/api/user', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ display_name: value })
       });
+      const data = await res.json();
+
+      if (data.success && data.profile) {
+        setValue(data.profile.display_name);
+      }
     } catch (err) {
       console.error('Failed to update display name:', err);
     }
@@ -103,7 +108,7 @@ function EditableDisplayName({
   if (editing) {
     return (
       <input
-        className="text-lg font-semibold text-primary bg-transparent border-b border-border focus:outline-none focus:border-primary"
+        className="text-lg font-semibold text-primary bg-transparent border-b border-border focus:outline-none focus:border-primary font-mono"
         autoFocus
         value={value}
         onChange={(e) => setValue(e.target.value)}

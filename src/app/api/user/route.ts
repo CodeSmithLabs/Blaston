@@ -3,16 +3,6 @@ import { NextResponse } from 'next/server';
 import { SupabaseUser } from '@/lib/API/Services/supabase/user';
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 
-export async function GET() {
-  try {
-    const user = await SupabaseUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    return NextResponse.json({ user });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
 export async function PATCH(request: Request) {
   try {
     const user = await SupabaseUser();
@@ -21,16 +11,17 @@ export async function PATCH(request: Request) {
     const { display_name } = await request.json();
     const supabase = SupabaseServerClient();
 
-    const { error: updateError } = await supabase
+    const { data: updatedProfile, error: updateError } = await supabase
       .from('user_profiles')
       .update({ display_name })
-      .eq('id', user.id);
+      .eq('id', user.id)
+      .single();
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, profile: updatedProfile });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
