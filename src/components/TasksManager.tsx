@@ -3,61 +3,44 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuid } from 'uuid';
-import { TasksAPI } from '@/lib/API/Services/supabase/tasks';
-
-interface Task {
-  id: string;
-  goal: string;
-  isCompleted: boolean;
-  lastCompletedDate?: string;
-}
+import { TasksAPI, Task } from '@/lib/API/Services/supabase/tasks';
 
 export default function TasksManager() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newGoal, setNewGoal] = useState('');
+  const [user, setUser] = useState<any>(null);
 
+  // Fetch user from API route
   useEffect(() => {
-    const stored = localStorage.getItem('lockedin-tasks');
-    if (stored) {
-      setTasks(JSON.parse(stored));
+    async function fetchUser() {
+      try {
+        const res = await fetch('/api/user', { credentials: 'include' });
+        const data = await res.json();
+        setUser(data.user);
+      } catch (error) {
+        console.error('Failed to load user:', error);
+      }
     }
+    fetchUser();
   }, []);
 
+  // Load tasks from local storage
   useEffect(() => {
-    localStorage.setItem('lockedin-tasks', JSON.stringify(tasks));
+    const loaded = TasksAPI.loadTasks();
+    setTasks(loaded);
+  }, []);
+
+  // Save tasks to local storage
+  useEffect(() => {
+    TasksAPI.saveTasks(tasks);
   }, [tasks]);
 
-  // Schedule a reset + sync at midnight local time
+  // Schedule midnight reset if user is available
   useEffect(() => {
-    function scheduleMidnightReset() {
-      const now = new Date();
-      const midnight = new Date();
-      midnight.setHours(0, 0, 0, 0);
-      if (midnight <= now) {
-        midnight.setDate(midnight.getDate() + 1);
-      }
-
-      const timeToMidnight = midnight.getTime() - now.getTime();
-
-      const timeoutId = setTimeout(() => {
-        setTasks((prev) => {
-          const resetTasks = prev.map((t) => ({
-            ...t,
-            isCompleted: false,
-            lastCompletedDate: ''
-          }));
-          localStorage.setItem('lockedin-tasks', JSON.stringify(resetTasks));
-          TasksAPI.syncTasks(resetTasks);
-          return resetTasks;
-        });
-        scheduleMidnightReset();
-      }, timeToMidnight);
-
-      return () => clearTimeout(timeoutId);
-    }
-
-    scheduleMidnightReset();
-  }, []);
+    if (!user?.id) return;
+    const cleanup = TasksAPI.scheduleMidnightReset(setTasks, user.id);
+    return cleanup;
+  }, [user?.id]);
 
   const handleAddGoal = useCallback(() => {
     if (!newGoal.trim()) return;
@@ -101,10 +84,10 @@ export default function TasksManager() {
   }, []);
 
   return (
-    <div className="p-4">
-      <div className="flex gap-2 mb-4 z-10">
+    <div className="text-card-foreground relative">
+      <div className="flex gap-2 mb-4 z-5">
         <input
-          className="border border-gray-300 px-2 py-1 rounded w-full"
+          className="border border-border bg-input text-foreground px-2 py-1 rounded w-full focus:outline-none focus:ring-2 focus:ring-ring"
           placeholder="Enter a goal"
           value={newGoal}
           onChange={(e) => setNewGoal(e.target.value)}
@@ -112,7 +95,7 @@ export default function TasksManager() {
         />
         <button
           onClick={handleAddGoal}
-          className="bg-purple-600 text-white px-4 py-1 rounded hover:bg-purple-700"
+          className="text-accent-foreground px-4 py-1 rounded hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring font-serif bg-accent"
         >
           Add Goal
         </button>
@@ -122,18 +105,21 @@ export default function TasksManager() {
         {tasks.map((task) => (
           <li
             key={task.id}
-            className="border p-3 rounded flex justify-between items-center bg-white"
+            className="border border-border p-3 rounded flex justify-between items-center bg-card text-foreground"
           >
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={task.isCompleted}
                 onChange={() => toggleCompletion(task.id)}
-                className="accent-purple-600"
+                className="accent-primary"
               />
               <EditableGoal goal={task.goal} onSave={(val) => editGoal(task.id, val)} />
             </div>
-            <button onClick={() => removeGoal(task.id)} className="text-red-500 hover:text-red-700">
+            <button
+              onClick={() => removeGoal(task.id)}
+              className="text-destructive hover:text-destructive-foreground transition-colors"
+            >
               Remove
             </button>
           </li>
@@ -159,7 +145,7 @@ function EditableGoal({ goal, onSave }: { goal: string; onSave: (val: string) =>
   if (editing) {
     return (
       <input
-        className="border-b border-gray-300 focus:outline-none bg-transparent text-black"
+        className="border-b border-border focus:outline-none bg-transparent text-foreground"
         autoFocus
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -172,7 +158,7 @@ function EditableGoal({ goal, onSave }: { goal: string; onSave: (val: string) =>
   return (
     <span
       onClick={() => setEditing(true)}
-      className="cursor-pointer text-black hover:text-purple-600"
+      className="cursor-pointer text-foreground hover:text-primary transition-colors"
     >
       {goal}
     </span>

@@ -4,7 +4,6 @@
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import { cookies } from 'next/headers';
 
-// A single type covering both sign-in and sign-up results
 type AuthResult = {
   error: { message: string } | null;
   data: {
@@ -13,7 +12,6 @@ type AuthResult = {
   } | null;
 };
 
-// DRY helper to set session cookies
 function storeSessionCookies(session: any) {
   const isProduction = process.env.NODE_ENV === 'production';
 
@@ -21,7 +19,7 @@ function storeSessionCookies(session: any) {
     httpOnly: true,
     secure: isProduction,
     maxAge: 60 * 60 * 24 * 7, // 7 days
-    path: '/dashboard'
+    path: '/'
   });
 
   cookies().set('sb-refresh-token', session.refresh_token, {
@@ -32,7 +30,6 @@ function storeSessionCookies(session: any) {
   });
 }
 
-// Sign in with email/password
 export const SupabaseSignIn = async (email: string, password: string): Promise<AuthResult> => {
   const supabase = SupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -51,12 +48,11 @@ export const SupabaseSignIn = async (email: string, password: string): Promise<A
 export const SupabaseSignUp = async (email: string, password: string): Promise<AuthResult> => {
   const supabase = SupabaseServerClient();
 
-  // Add the redirect option
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: 'https://lockedin-xi.vercel.app/auth/auth-confirm'
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
     }
   });
 
@@ -64,26 +60,25 @@ export const SupabaseSignUp = async (email: string, password: string): Promise<A
     return { error, data: null };
   }
 
+  // Create a user profile entry after successful signup
+  if (data.user) {
+    await supabase.from('user_profiles').insert({
+      id: data.user.id,
+      display_name: email.split('@')[0], // Use email prefix as display name
+      goals: []
+    });
+  }
+
   return { error: null, data };
 };
 
-// Sign out
 export const SupabaseSignOut = async (): Promise<{ error: { message: string } | null }> => {
   const supabase = SupabaseServerClient();
   const { error } = await supabase.auth.signOut();
 
   // Clear cookies
-  cookies().set('sb-access-token', '', {
-    httpOnly: true,
-    maxAge: 0,
-    path: '/dashboard'
-  });
-
-  cookies().set('sb-refresh-token', '', {
-    httpOnly: true,
-    maxAge: 0,
-    path: '/'
-  });
+  cookies().delete('sb-access-token');
+  cookies().delete('sb-refresh-token');
 
   return { error };
 };

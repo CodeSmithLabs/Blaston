@@ -1,4 +1,4 @@
-// user.ts
+// lib/API/Services/supabase/user.ts
 'use server';
 
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
@@ -18,9 +18,16 @@ export const SupabaseSession = async () => {
     }
 
     if (userData?.user) {
+      const { data: profileData } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userData.user.id)
+        .single();
+
       return {
         session: {
-          user: userData.user
+          user: userData.user,
+          profile: profileData
         }
       };
     }
@@ -31,14 +38,40 @@ export const SupabaseSession = async () => {
 
 export const SupabaseUser = async () => {
   const supabase = SupabaseServerClient();
-  const token = cookies().get('sb-access-token')?.value;
+  const accessToken = cookies().get('sb-access-token')?.value;
+  const refreshToken = cookies().get('sb-refresh-token')?.value;
 
-  if (token) {
-    await supabase.auth.setSession({ access_token: token, refresh_token: '' });
+  if (!accessToken || !refreshToken) {
+    return null;
   }
 
-  const { data, error } = await supabase.auth.getUser();
-  if (error) SupabaseAuthError(error);
+  const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+    access_token: accessToken,
+    refresh_token: refreshToken
+  });
+  if (sessionError) {
+    console.log('Session Error:', sessionError.message);
+    return null;
+  }
 
-  return data?.user;
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData?.user) {
+    console.log('User Error:', userError?.message);
+    return null;
+  }
+
+  const { data: profileData, error: profileError } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', userData.user.id)
+    .single();
+
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
+
+  return {
+    ...userData.user,
+    profile: profileData
+  };
 };

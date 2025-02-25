@@ -4,12 +4,16 @@ import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 
 export async function POST(request: Request) {
   try {
-    const { tasks } = await request.json();
+    const { tasks, userId } = await request.json();
     const supabase = SupabaseServerClient();
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .update({ goals: tasks })
+      .eq('id', userId)
+      .select();
 
-    const { data, error } = await supabase.from('goals').upsert(tasks, { onConflict: 'id' });
     if (error) {
-      console.error('Supabase upsert error:', error);
+      console.error('Supabase update error:', error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 

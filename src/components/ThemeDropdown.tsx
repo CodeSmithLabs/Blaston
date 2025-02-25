@@ -31,7 +31,7 @@ export const ThemeDropDownMenu = () => {
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
-          className="bg-background border border-border rounded-md shadow-lg z-60"
+          className="bg-background dark:bg-gray-800 border border-border rounded-md shadow-lg shadow-gray-900/50 z-[1000] opacity-95 h-48 py-2"
         >
           <DropdownMenuItem onClick={() => setTheme('light')}>Light</DropdownMenuItem>
           <DropdownMenuItem onClick={() => setTheme('dark')}>Dark</DropdownMenuItem>
