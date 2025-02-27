@@ -11,7 +11,7 @@ export default async function DashboardLayout({ children }: LayoutProps) {
   const session = sessionResponse?.session;
 
   if (!session) {
-    redirect(config.redirects.requireAuth);
+    redirect(config.routes.login.link);
   }
 
   const displayName = session?.profile?.display_name;
