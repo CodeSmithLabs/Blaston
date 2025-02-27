@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import config from '@/lib/config/auth';
 import DashboardShell from '@/components/DashboardShell';
 import { LayoutProps } from '@/lib/types/types';
+import { ToastContainer } from 'react-toastify';
 
 export default async function DashboardLayout({ children }: LayoutProps) {
   const sessionResponse = await SupabaseSession();
@@ -17,8 +18,11 @@ export default async function DashboardLayout({ children }: LayoutProps) {
   const email = session?.user?.email;
 
   return (
-    <DashboardShell displayName={displayName} email={email}>
-      {children}
-    </DashboardShell>
+    <>
+      <ToastContainer />
+      <DashboardShell displayName={displayName} email={email}>
+        {children}
+      </DashboardShell>
+    </>
   );
 }

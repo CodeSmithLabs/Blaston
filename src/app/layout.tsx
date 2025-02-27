@@ -19,7 +19,7 @@ const RootLayout = ({ children }) => {
           <NextTopLoader color={config.loading_bar_color} />
           {children}
         </ThemeProvider>
-        <ToastContainer position="bottom-right" />
+        <ToastContainer position="top-right" />
       </body>
     </html>
   );
