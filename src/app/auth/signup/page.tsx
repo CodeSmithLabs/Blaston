@@ -6,6 +6,7 @@ import { SupabaseSignUp } from '@/lib/API/Services/supabase/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { authFormSchema, authFormValues } from '@/lib/types/validations';
 import { useForm } from 'react-hook-form';
+import { toast } from 'react-toastify';
 import { Button } from '@/components/ui/Button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/Form';
 import { Input } from '@/components/ui/Input';
@@ -23,7 +24,6 @@ import { Icons } from '@/components/Icons';
 
 export default function AuthForm() {
   const [showPassword, setShowPassword] = useState(false);
-
   const router = useRouter();
 
   const form = useForm<authFormValues>({
@@ -47,13 +47,15 @@ export default function AuthForm() {
     if (error) {
       reset({ email: values.email, password: '' });
       setError('email', {
-        type: '"root.serverError',
+        type: 'root.serverError',
         message: error.message
       });
       setError('password', { type: 'root.serverError', message: '' });
-
+      toast.error(error.message);
       return;
     }
+
+    toast.success('Signup successful! Check your email for verification.');
     router.push(config.redirects.checkEmail);
   };
 
@@ -122,7 +124,7 @@ export default function AuthForm() {
                   </FormItem>
                 )}
               />
-              <Button className="w-full">
+              <Button className="w-full" disabled={isSubmitting}>
                 {isSubmitting && <Icons.Spinner className="mr-2 h-4 w-4 animate-spin" />}
                 <Icons.Lock className="mr-2 h-4 w-4" />
                 Create account
