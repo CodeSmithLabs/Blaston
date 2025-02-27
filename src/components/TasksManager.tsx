@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuid } from 'uuid';
 import { TasksAPI, Task } from '@/lib/API/Services/supabase/tasks';
+import { SupabaseUser } from '@/lib/API/Services/supabase/user';
 
 export default function TasksManager() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -13,15 +14,9 @@ export default function TasksManager() {
   // Fetch user from API route
   useEffect(() => {
     async function fetchUser() {
-      try {
-        const res = await fetch('/api/user', { credentials: 'include' });
-        const data = await res.json();
-        setUser(data.user);
-      } catch (error) {
-        console.error('Failed to load user:', error);
-      }
+      const userData = await SupabaseUser();
+      setUser(userData);
     }
-    fetchUser();
   }, []);
 
   // Load tasks from local storage

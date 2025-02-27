@@ -110,7 +110,7 @@ function EditableDisplayName({
       <input
         className="text-lg font-semibold text-primary bg-transparent border-b border-border focus:outline-none focus:border-primary font-mono"
         autoFocus
-        value={value}
+        value={value ?? ''} // Prevents undefined errors
         onChange={(e) => setValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
