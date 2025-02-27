@@ -52,21 +52,12 @@ export const SupabaseSignUp = async (email: string, password: string): Promise<A
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/auth-confirm`
     }
   });
 
   if (error) {
     return { error, data: null };
-  }
-
-  // Create a user profile entry after successful signup
-  if (data.user) {
-    await supabase.from('user_profiles').insert({
-      id: data.user.id,
-      display_name: email.split('@')[0], // Use email prefix as display name
-      goals: []
-    });
   }
 
   return { error: null, data };

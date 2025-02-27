@@ -25,12 +25,16 @@ export default function AuthConfirmPage() {
         credentials: 'include',
         body: JSON.stringify({ access_token, refresh_token })
       })
-        .then((res) => res.json())
-        .then(() => {
+        .then(async (res) => {
+          if (!res.ok) {
+            router.push('/auth/confirm-expired');
+            return;
+          }
+          await res.json();
           router.push('/dashboard/tasks');
         })
         .catch(() => {
-          router.push('/');
+          router.push('/auth/confirm-expired');
         });
     } else {
       router.push('/');

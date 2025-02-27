@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { SupabaseSignUp } from '@/lib/API/Services/supabase/auth';
+import { toast } from 'react-toastify';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { authFormSchema, authFormValues } from '@/lib/types/validations';
 import { useForm } from 'react-hook-form';
-import { toast } from 'react-toastify';
 import { Button } from '@/components/ui/Button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/Form';
 import { Input } from '@/components/ui/Input';
@@ -42,21 +41,28 @@ export default function AuthForm() {
   } = form;
 
   const onSubmit = async (values: authFormValues) => {
-    const { error } = await SupabaseSignUp(values.email, values.password);
-
-    if (error) {
-      reset({ email: values.email, password: '' });
-      setError('email', {
-        type: 'root.serverError',
-        message: error.message
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values)
       });
-      setError('password', { type: 'root.serverError', message: '' });
-      toast.error(error.message);
-      return;
-    }
 
-    toast.success('Signup successful! Check your email for verification.');
-    router.push(config.redirects.checkEmail);
+      const data = await res.json();
+
+      if (!res.ok) {
+        reset({ email: values.email, password: '' });
+        setError('email', { type: 'root.serverError', message: data.error });
+        setError('password', { type: 'root.serverError', message: '' });
+        toast.error(data.error);
+        return;
+      }
+
+      toast.success('Signup successful! Check your email for verification.');
+      router.push(config.redirects.checkEmail);
+    } catch (error) {
+      toast.error('Something went wrong. Please try again.');
+    }
   };
 
   const togglePasswordVisibility = () => {
