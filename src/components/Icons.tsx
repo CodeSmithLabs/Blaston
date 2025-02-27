@@ -5,7 +5,6 @@ import {
   Settings,
   AlignLeftIcon,
   Mail,
-  Command,
   X,
   Loader2,
   EyeIcon,
@@ -24,6 +23,8 @@ import {
   Menu
 } from 'lucide-react';
 
+import Image from 'next/image';
+
 const Google = ({ ...props }) => (
   <svg role="img" className="h-4 w-4" viewBox="0 0 24 24" {...props}>
     <path
@@ -40,7 +41,7 @@ export const Icons = {
   Home,
   User,
   Mail,
-  Command,
+  Command: () => <Image src="/static/images/icon.png" alt="logo" width={24} height={24} />,
   Close: X,
   Check,
   Spinner: Loader2,
