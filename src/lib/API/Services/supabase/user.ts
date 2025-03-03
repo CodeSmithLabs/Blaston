@@ -63,8 +63,7 @@ export const SupabaseUser = async () => {
   const { data: profileData, error: profileError } = await supabase
     .from('user_profiles')
     .select('*')
-    .eq('id', userData.user.id)
-    .single();
+    .eq('id', userData.user.id);
 
   if (profileError) {
     throw new Error(profileError.message);

@@ -1,73 +1,133 @@
 // lib/API/Services/supabase/tasks.ts
-'use client';
+'use server';
+import { SupabaseServerClient } from '../init/supabase';
+import { v4 as uuid } from 'uuid';
 
 export interface Task {
   id: string;
-  goal: string;
+  goalId: string;
+  text: string;
   isCompleted: boolean;
-  lastCompletedDate?: string;
+  lastCompleted?: string;
 }
 
-function resetTasks(tasks: Task[]): Task[] {
-  return tasks.map((t) => ({
-    ...t,
-    isCompleted: false,
-    lastCompletedDate: ''
-  }));
+export interface Goal {
+  id: string;
+  name: string;
+  tasks: Task[];
+  created_at: string;
 }
 
 export const TasksAPI = {
-  loadTasks: (): Task[] => {
-    if (typeof window === 'undefined') return [];
-    const stored = localStorage.getItem('lockedin-tasks');
-    return stored ? JSON.parse(stored) : [];
+  loadGoals: async (userId: string): Promise<Goal[]> => {
+    const supabase = SupabaseServerClient();
+    const { data } = await supabase.from('user_profiles').select('goals').eq('id', userId).single();
+    return data?.goals || [];
   },
 
-  saveTasks: (tasks: Task[]) => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem('lockedin-tasks', JSON.stringify(tasks));
-  },
-
-  scheduleMidnightReset: (
-    setTasks: React.Dispatch<React.SetStateAction<Task[]>>,
-    userId: string
-  ) => {
-    function schedule() {
-      const now = new Date();
-      const midnight = new Date();
-      midnight.setHours(0, 0, 0, 0);
-      if (midnight <= now) midnight.setDate(midnight.getDate() + 1);
-
-      const timeToMidnight = midnight.getTime() - now.getTime();
-
-      const timeoutId = setTimeout(() => {
-        setTasks((prev) => {
-          const reset = resetTasks(prev);
-          TasksAPI.saveTasks(reset);
-          TasksAPI.syncTasks(reset, userId);
-          return reset;
-        });
-        schedule();
-      }, timeToMidnight);
-
-      return timeoutId;
-    }
-
-    const timeoutId = schedule();
-    return () => clearTimeout(timeoutId);
-  },
-
-  syncTasks: async (tasks: Task[], userId: string) => {
+  saveAITasks: async (goalsData: { goal: string; tasks: string[] }[], userId: string) => {
     try {
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tasks, userId })
+      const supabase = SupabaseServerClient();
+      const goals: Goal[] = goalsData.map((goalData) => {
+        const goalId = uuid();
+        return {
+          id: goalId,
+          name: goalData.goal,
+          tasks: goalData.tasks.map((task) => ({
+            id: uuid(),
+            goalId,
+            text: task,
+            isCompleted: false,
+            lastCompleted: null
+          })),
+          created_at: new Date().toISOString()
+        };
       });
-      return await response.json();
+
+      await supabase
+        .from('user_profiles')
+        .update({ goals, has_set_initial_goals: true })
+        .eq('id', userId);
+      return true;
     } catch (error) {
-      console.error('Sync error:', error);
-      return { error: 'Sync failed' };
+      return false;
+    }
+  },
+
+  addManualTask: async (goalId: string, taskText: string, userId: string) => {
+    try {
+      const supabase = SupabaseServerClient();
+      const goals = await TasksAPI.loadGoals(userId);
+      const updatedGoals = goals.map((goal) =>
+        goal.id === goalId
+          ? {
+              ...goal,
+              tasks: [
+                ...goal.tasks,
+                {
+                  id: uuid(),
+                  goalId,
+                  text: taskText,
+                  isCompleted: false,
+                  lastCompleted: null
+                }
+              ]
+            }
+          : goal
+      );
+
+      await supabase.from('user_profiles').update({ goals: updatedGoals }).eq('id', userId);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  },
+
+  toggleTaskCompletion: async (goalId: string, taskId: string, userId: string) => {
+    try {
+      const supabase = SupabaseServerClient();
+      const goals = await TasksAPI.loadGoals(userId);
+      const updatedGoals = goals.map((goal) =>
+        goal.id === goalId
+          ? {
+              ...goal,
+              tasks: goal.tasks.map((task) =>
+                task.id === taskId
+                  ? {
+                      ...task,
+                      isCompleted: !task.isCompleted,
+                      lastCompleted: task.isCompleted ? null : new Date().toISOString()
+                    }
+                  : task
+              )
+            }
+          : goal
+      );
+
+      await supabase.from('user_profiles').update({ goals: updatedGoals }).eq('id', userId);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  },
+
+  removeTask: async (goalId: string, taskId: string, userId: string) => {
+    try {
+      const supabase = SupabaseServerClient();
+      const goals = await TasksAPI.loadGoals(userId);
+      const updatedGoals = goals.map((goal) =>
+        goal.id === goalId
+          ? {
+              ...goal,
+              tasks: goal.tasks.filter((task) => task.id !== taskId)
+            }
+          : goal
+      );
+
+      await supabase.from('user_profiles').update({ goals: updatedGoals }).eq('id', userId);
+      return true;
+    } catch (error) {
+      return false;
     }
   }
 };
