@@ -10,6 +10,7 @@ import {
   toggleTaskCompletion,
   Goal
 } from '@/app/actions/tasks';
+import { Trash2Icon } from 'lucide-react';
 
 export default function TasksManager() {
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -134,7 +135,7 @@ export default function TasksManager() {
         <button
           onClick={handleAddTask}
           disabled={!newTask.trim()}
-          className="text-accent-foreground px-4 py-1 rounded hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring font-serif bg-accent disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="bg-accent-primary text-accent-foreground px-4 py-1 rounded hover:bg-accent-primary-hover transition-colors hover:shadow-md hover:transform hover:scale-105 border border-accent-foreground"
         >
           Add Task
         </button>
@@ -164,7 +165,7 @@ export default function TasksManager() {
                   onClick={() => handleRemoveTask(goal.id, task.id)}
                   className="text-destructive hover:text-destructive-foreground transition-colors"
                 >
-                  Remove
+                  <Trash2Icon size={20} />
                 </button>
               </li>
             ))}
