@@ -1,15 +1,19 @@
 // app/auth/layout.tsx
-import { MainLogoText, MainLogoIcon } from '@/components/MainLogo';
+import { MainLogoText } from '@/components/MainLogo';
 import { Separator } from '@/components/ui/Separator';
 import { LayoutProps } from '@/lib/types/types';
-import { ThemeDropDownMenu } from '../../components/ThemeDropdown';
+import { ThemeDropDownMenu } from '@/components/ThemeDropdown';
 import { redirect } from 'next/navigation';
 import config from '@/lib/config/auth';
 import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
 import { ToastContainer } from 'react-toastify';
 
 export default async function AuthLayout({ children }: LayoutProps) {
-  const sessionData = await getSupabaseUserSession();
+  const sessionData = await getSupabaseUserSession(true);
+
+  if (sessionData?.user && !sessionData.user.profile) {
+    redirect(config.routes.confirmEpired.link);
+  }
 
   // Reverse Auth Guard
   if (sessionData?.session) {

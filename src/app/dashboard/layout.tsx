@@ -7,13 +7,18 @@ import { LayoutProps } from '@/lib/types/types';
 import { ToastContainer } from 'react-toastify';
 
 export default async function DashboardLayout({ children }: LayoutProps) {
-  const sessionData = await getSupabaseUserSession();
+  const sessionData = await getSupabaseUserSession(true);
+
   if (!sessionData?.session) {
     redirect(config.routes.login.link);
   }
 
-  const displayName = sessionData.user?.profile?.display_name ?? 'User';
-  const email = sessionData.user?.email ?? '';
+  if (!sessionData.user?.profile) {
+    redirect(config.routes.confirmEpired.link);
+  }
+
+  const displayName = sessionData.user.profile.display_name ?? 'User';
+  const email = sessionData.user.email ?? '';
 
   return (
     <>

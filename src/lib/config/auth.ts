@@ -13,6 +13,12 @@ const config = {
     },
     magiclink: {
       link: '/auth/magic-link'
+    },
+    checkEmail: {
+      link: '/auth/check-email'
+    },
+    confirmEpired: {
+      link: '/auth/confirm-expired'
     }
   },
   redirects: {
@@ -24,8 +30,7 @@ const config = {
     callback: '/api/auth-callback',
     toProfile: '/dashboard/settings/profile',
     requireSub: '/dashboard/settings/subscription-required',
-    toAddSub: '/dashboard/settings/add-subscription',
-    checkEmail: '/auth/check-email'
+    toAddSub: '/dashboard/settings/add-subscription'
   }
 };
 
