@@ -27,6 +27,7 @@ const config = {
     toBilling: '/dashboard/settings/billing',
     requireAuth: '/auth/auth-required',
     authConfirm: '/auth/auth-confirm',
+    checkEmail: '/auth/check-email',
     callback: '/api/auth-callback',
     toProfile: '/dashboard/settings/profile',
     requireSub: '/dashboard/settings/subscription-required',
