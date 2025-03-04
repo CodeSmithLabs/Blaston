@@ -1,10 +1,8 @@
-// components/GoalSettingModal.tsx
+// GoalSettingModal.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { SupabaseUser } from '@/lib/API/Services/supabase/user';
-import { generateTasks } from '@/lib/togetherAI';
-import { TasksAPI } from '@/lib/API/Services/supabase/tasks';
 
 interface GoalSettingModalProps {
   isOpen: boolean;
@@ -30,27 +28,30 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
 
     setIsGenerating(true);
     try {
-      // Generate tasks for all 3 goals at once
-      const allTasks = await Promise.all(
-        goals.map(async (goal) => {
-          const aiTasks = await generateTasks(goal);
-          return {
-            goal: goal.trim(),
-            tasks:
-              aiTasks?.output
-                ?.split('\n')
-                .filter((t) => t.trim())
-                .slice(0, 3)
-                .map((t) => t.replace(/^\d+\.\s*/, '').trim()) || []
-          };
-        })
-      );
+      const taskResponse = await fetch('/api/generate-tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goals })
+      });
 
-      // Save all goals and tasks to Supabase
-      await TasksAPI.saveAITasks(allTasks, user.id);
+      if (!taskResponse.ok) {
+        throw new Error(`HTTP error! Status: ${taskResponse.status}`);
+      }
+
+      const { tasks } = await taskResponse.json();
+      if (!tasks) throw new Error('Failed to generate tasks');
+
+      const saveResponse = await fetch('/api/save-tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tasks, userId: user.id })
+      });
+
+      if (!saveResponse.ok) throw new Error('Failed to save tasks');
+
       onClose();
     } catch (error) {
-      console.error('AI Task generation failed:', error);
+      console.error('Task generation failed:', error);
     } finally {
       setIsGenerating(false);
     }

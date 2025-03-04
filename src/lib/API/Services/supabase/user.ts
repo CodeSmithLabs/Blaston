@@ -2,7 +2,6 @@
 'use server';
 
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
-import { SupabaseAuthError } from '@/lib/utils/error';
 import { cookies } from 'next/headers';
 
 export const SupabaseSession = async () => {
@@ -36,41 +35,44 @@ export const SupabaseSession = async () => {
   return { session: null };
 };
 
+interface UserProfile {
+  id: string;
+  has_set_initial_goals: boolean;
+  goals?: any[];
+}
+
 export const SupabaseUser = async () => {
   const supabase = SupabaseServerClient();
   const accessToken = cookies().get('sb-access-token')?.value;
   const refreshToken = cookies().get('sb-refresh-token')?.value;
 
-  if (!accessToken || !refreshToken) {
+  if (!accessToken || !refreshToken) return null;
+
+  try {
+    const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken
+    });
+
+    if (sessionError) throw sessionError;
+
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) throw userError || new Error('No user data');
+
+    const { data: profileData, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', userData.user.id)
+      .single();
+
+    if (profileError) throw profileError;
+
+    return {
+      ...userData.user,
+      profile: profileData as UserProfile
+    };
+  } catch (error) {
+    console.error('Supabase user error:', error);
     return null;
   }
-
-  const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken
-  });
-  if (sessionError) {
-    console.log('Session Error:', sessionError.message);
-    return null;
-  }
-
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData?.user) {
-    console.log('User Error:', userError?.message);
-    return null;
-  }
-
-  const { data: profileData, error: profileError } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', userData.user.id);
-
-  if (profileError) {
-    throw new Error(profileError.message);
-  }
-
-  return {
-    ...userData.user,
-    profile: profileData
-  };
 };

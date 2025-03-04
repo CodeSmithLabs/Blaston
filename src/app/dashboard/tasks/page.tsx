@@ -4,17 +4,23 @@ import TasksManager from '@/components/TasksManager';
 import { GoalSettingModal } from '@/components/GoalSettingModal';
 import { SupabaseUser } from '@/lib/API/Services/supabase/user';
 
+interface UserProfile {
+  id: string;
+  has_set_initial_goals: boolean;
+  goals?: any[];
+}
+
 export default function TasksPage() {
   const [showGoalModal, setShowGoalModal] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkInitialGoals = async () => {
       const user = await SupabaseUser();
-      if (user) {
+      if (user?.profile) {
         setUserProfile(user.profile);
-        setShowGoalModal(!user.profile?.has_set_initial_goals);
+        setShowGoalModal(!user.profile.has_set_initial_goals);
       }
       setLoading(false);
     };
@@ -24,7 +30,9 @@ export default function TasksPage() {
 
   const handleGoalSetComplete = async () => {
     const user = await SupabaseUser();
-    setUserProfile(user?.profile);
+    if (user?.profile) {
+      setUserProfile(user.profile);
+    }
     setShowGoalModal(false);
   };
 
