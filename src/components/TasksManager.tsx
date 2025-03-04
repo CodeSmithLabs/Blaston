@@ -165,7 +165,7 @@ export default function TasksManager() {
                   onClick={() => handleRemoveTask(goal.id, task.id)}
                   className="text-destructive hover:text-destructive-foreground transition-colors"
                 >
-                  <Trash2Icon size={20} />
+                  <Trash2Icon size={20} className="hover:transform hover:scale-110" />
                 </button>
               </li>
             ))}
