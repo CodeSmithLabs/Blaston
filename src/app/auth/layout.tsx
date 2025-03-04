@@ -4,11 +4,11 @@ import { LayoutProps } from '@/lib/types/types';
 import { ThemeDropDownMenu } from '../../components/ThemeDropdown';
 import { redirect } from 'next/navigation';
 import config from '@/lib/config/auth';
-import { SupabaseSession } from '@/lib/API/Services/supabase/user';
+import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
 import { ToastContainer } from 'react-toastify';
 
 export default async function AuthLayout({ children }: LayoutProps) {
-  const session = await SupabaseSession();
+  const session = await getSupabaseUserSession(true);
 
   // Reverse Auth Guard
   if (session?.session) {

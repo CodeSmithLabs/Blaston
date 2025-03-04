@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SupabaseUser } from '@/lib/API/Services/supabase/user';
+import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
 
 interface GoalSettingModalProps {
   isOpen: boolean;
@@ -17,8 +17,8 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
 
   useEffect(() => {
     const fetchUser = async () => {
-      const userData = await SupabaseUser();
-      setUser(userData);
+      const userData = await getSupabaseUserSession(true);
+      setUser(userData?.user);
     };
     fetchUser();
   }, []);

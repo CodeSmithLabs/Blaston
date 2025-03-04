@@ -4,37 +4,20 @@
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import { getSessionCookies } from '../../auth/cookies';
 
-export async function SupabaseSession() {
-  const { accessToken } = getSessionCookies();
-  if (!accessToken) return { session: null };
-
-  const supabase = SupabaseServerClient();
-  const { data: userData, error } = await supabase.auth.getUser(accessToken);
-
-  if (error || !userData?.user) return { session: null };
-
-  const { data: profileData } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', userData.user.id)
-    .single();
-
-  return { session: { user: userData.user, profile: profileData } };
-}
-
-export async function SupabaseUser() {
+export async function getSupabaseUserSession(includeSession = false) {
   const { accessToken, refreshToken } = getSessionCookies();
-  if (!accessToken || !refreshToken) return null;
+  if (!accessToken || !refreshToken) return { session: null, user: null };
 
   const supabase = SupabaseServerClient();
 
   try {
-    const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken
-    });
-
-    if (sessionError) throw sessionError;
+    if (includeSession) {
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      });
+      if (sessionError) throw sessionError;
+    }
 
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData?.user) throw userError || new Error('No user data');
@@ -47,9 +30,12 @@ export async function SupabaseUser() {
 
     if (profileError) throw profileError;
 
-    return { ...userData.user, profile: profileData };
+    return {
+      session: includeSession ? userData : null,
+      user: { ...userData.user, profile: profileData }
+    };
   } catch (error) {
-    console.error('Supabase user error:', error);
-    return null;
+    console.error('Supabase user session error:', error);
+    return { session: null, user: null };
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { TasksAPI, Goal } from '@/lib/API/Services/supabase/tasks';
-import { SupabaseUser } from '@/lib/API/Services/supabase/user';
+import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
 
 export default function TasksManager() {
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -11,10 +11,10 @@ export default function TasksManager() {
 
   useEffect(() => {
     const loadData = async () => {
-      const userData = await SupabaseUser();
+      const userData = await getSupabaseUserSession(true);
       if (userData) {
-        setUser(userData);
-        const goalsData = await TasksAPI.loadGoals(userData.id);
+        setUser(userData.user);
+        const goalsData = await TasksAPI.loadGoals(userData.user.id);
         setGoals(goalsData);
         setSelectedGoal(goalsData[0]?.id || '');
       }
