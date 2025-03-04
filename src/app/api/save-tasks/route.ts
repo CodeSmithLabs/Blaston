@@ -1,16 +1,14 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+// app/api/save-tasks/route.ts
+import { NextResponse } from 'next/server';
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import { v4 as uuid } from 'uuid';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+export async function POST(request: Request) {
   try {
-    const { tasks, userId } = req.body;
+    const { tasks, userId } = await request.json();
+
     if (!tasks || !userId) {
-      return res.status(400).json({ error: 'Tasks and userId are required' });
+      return NextResponse.json({ error: 'Tasks and userId are required' }, { status: 400 });
     }
 
     const supabase = SupabaseServerClient();
@@ -38,12 +36,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (error) {
       console.error('Supabase update error:', error);
-      return res.status(400).json({ error: error.message });
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    res.status(200).json({ success: true, tasks: goals });
+    return NextResponse.json({ success: true, tasks: goals });
   } catch (error) {
     console.error('Error saving tasks:', error);
-    res.status(500).json({ error: 'Failed to save tasks' });
+    return NextResponse.json({ error: 'Failed to save tasks' }, { status: 500 });
   }
 }
