@@ -1,52 +1,40 @@
-//api/generated-tasks/route.ts
-import { NextApiRequest, NextApiResponse } from 'next';
-import axios from 'axios';
+//api/generate-tasks/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { generateTasks } from '@/lib/togetherClient';
 
-const TOGETHER_AI_API_KEY = process.env.TOGETHER_AI_API_KEY;
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+export async function POST(req: NextRequest) {
   try {
-    const { goals } = req.body;
+    const { goals } = await req.json();
     if (!goals || !Array.isArray(goals)) {
-      return res.status(400).json({ error: 'Goals array is required' });
+      return NextResponse.json({ error: 'Goals array is required' }, { status: 400 });
     }
 
     const tasks = await Promise.all(
       goals.map(async (goal: string) => {
-        const response = await axios.post(
-          'https://api.together.ai/generate',
-          {
-            model: 'mistral-7b-instruct',
-            prompt: `Given the goal: "${goal}", generate three structured daily tasks to achieve it.`,
-            max_tokens: 100
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${TOGETHER_AI_API_KEY}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
+        const prompt = `Given the goal: "${goal}", generate three structured daily tasks to achieve it.`;
 
-        return {
-          goal,
-          tasks:
-            response.data?.output
-              ?.split('\n')
-              .filter((t: string) => t.trim())
-              .slice(0, 3)
-              .map((t: string) => t.replace(/^\d+\.\s*/, '').trim()) || []
-        };
+        try {
+          const response = await generateTasks([{ role: 'system', content: prompt }]);
+
+          return {
+            goal,
+            tasks:
+              response
+                .split('\n')
+                .filter((t: string) => t.trim())
+                .slice(0, 3)
+                .map((t: string) => t.replace(/^\d+\.\s*/, '').trim()) || []
+          };
+        } catch (error) {
+          console.error(`Error generating tasks for goal "${goal}":`, error);
+          return { goal, tasks: [] };
+        }
       })
     );
 
-    res.status(200).json({ tasks });
+    return NextResponse.json({ tasks }, { status: 200 });
   } catch (error) {
-    console.error('Error generating tasks:', error);
-    res.status(500).json({ error: 'Failed to generate tasks' });
+    console.error('Error in /api/generate-tasks:', error);
+    return NextResponse.json({ error: 'Failed to generate tasks' }, { status: 500 });
   }
 }
