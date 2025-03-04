@@ -1,56 +1,112 @@
+// components/TasksManager.tsx
 'use client';
+
 import { useState, useEffect } from 'react';
-import { TasksAPI, Goal } from '@/lib/API/Services/supabase/tasks';
 import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
+import {
+  loadGoals,
+  addManualTask,
+  removeTask,
+  toggleTaskCompletion,
+  Goal
+} from '@/app/actions/tasks';
 
 export default function TasksManager() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [newTask, setNewTask] = useState('');
-  const [selectedGoal, setSelectedGoal] = useState('');
+  const [selectedGoal, setSelectedGoal] = useState<string>('');
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Load user and goals on mount
   useEffect(() => {
-    console.log('TasksAPI:', TasksAPI);
-    console.log('loadGoals:', TasksAPI?.loadGoals);
-
     const loadData = async () => {
-      const userData = await getSupabaseUserSession(true);
-      if (userData) {
+      try {
+        const userData = await getSupabaseUserSession(true);
+        if (!userData?.user) throw new Error('User session not found');
+
         setUser(userData.user);
-        try {
-          const goalsData = await TasksAPI.loadGoals(userData.user.id);
-          setGoals(goalsData);
-          setSelectedGoal(goalsData[0]?.id || '');
-        } catch (error) {
-          console.error('Error loading goals:', error);
-        }
+        const goalsData = await loadGoals(userData.user.id);
+        setGoals(goalsData);
+        setSelectedGoal(goalsData[0]?.id || '');
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setError('Failed to load tasks. Please try again.');
+      } finally {
+        setLoading(false);
       }
     };
+
     loadData();
   }, []);
 
   const handleAddTask = async () => {
     if (!newTask.trim() || !selectedGoal || !user?.id) return;
 
-    await TasksAPI.addManualTask(selectedGoal, newTask.trim(), user.id);
-    setNewTask('');
-    const updatedGoals = await TasksAPI.loadGoals(user.id);
-    setGoals(updatedGoals);
+    try {
+      setError(null);
+      await addManualTask(selectedGoal, newTask.trim(), user.id);
+
+      // Refresh goals
+      const updatedGoals = await loadGoals(user.id);
+      setGoals(updatedGoals);
+      setNewTask('');
+    } catch (error) {
+      console.error('Error adding task:', error);
+      setError('Failed to add task. Please try again.');
+    }
   };
 
   const handleRemoveTask = async (goalId: string, taskId: string) => {
     if (!user?.id) return;
-    await TasksAPI.removeTask(goalId, taskId, user.id);
-    const updatedGoals = await TasksAPI.loadGoals(user.id);
-    setGoals(updatedGoals);
+
+    try {
+      setError(null);
+      await removeTask(goalId, taskId, user.id);
+
+      // Refresh goals
+      const updatedGoals = await loadGoals(user.id);
+      setGoals(updatedGoals);
+    } catch (error) {
+      console.error('Error removing task:', error);
+      setError('Failed to remove task. Please try again.');
+    }
   };
 
   const handleToggleTask = async (goalId: string, taskId: string) => {
     if (!user?.id) return;
-    await TasksAPI.toggleTaskCompletion(goalId, taskId, user.id);
-    const updatedGoals = await TasksAPI.loadGoals(user.id);
-    setGoals(updatedGoals);
+
+    try {
+      setError(null);
+      await toggleTaskCompletion(goalId, taskId, user.id);
+
+      // Refresh goals
+      const updatedGoals = await loadGoals(user.id);
+      setGoals(updatedGoals);
+    } catch (error) {
+      console.error('Error toggling task:', error);
+      setError('Failed to update task. Please try again.');
+    }
   };
+
+  if (loading) {
+    return <div className="py-4 lg:px-16">Loading tasks...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="py-4 lg:px-16 text-red-500">
+        {error}
+        <button
+          onClick={() => window.location.reload()}
+          className="ml-2 text-blue-500 hover:underline"
+        >
+          Refresh
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="text-card-foreground relative">
@@ -77,7 +133,8 @@ export default function TasksManager() {
 
         <button
           onClick={handleAddTask}
-          className="text-accent-foreground px-4 py-1 rounded hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring font-serif bg-accent"
+          disabled={!newTask.trim()}
+          className="text-accent-foreground px-4 py-1 rounded hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring font-serif bg-accent disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           Add Task
         </button>
@@ -99,7 +156,9 @@ export default function TasksManager() {
                     onChange={() => handleToggleTask(goal.id, task.id)}
                     className="accent-primary"
                   />
-                  <span>{task.text}</span>
+                  <span className={task.isCompleted ? 'line-through opacity-75' : ''}>
+                    {task.text}
+                  </span>
                 </div>
                 <button
                   onClick={() => handleRemoveTask(goal.id, task.id)}

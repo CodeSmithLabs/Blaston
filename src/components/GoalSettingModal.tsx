@@ -1,8 +1,10 @@
+//src/components/GoalSettingModal.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
-import { saveAITasks } from '@/lib/API/Services/supabase/tasks';
+import { saveAITasks } from '@/app/actions/tasks';
+import { TrashIcon } from 'lucide-react';
 
 interface GoalSettingModalProps {
   isOpen: boolean;
@@ -46,12 +48,16 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
       if (!taskResponse.ok) throw new Error(`Task generation failed: ${taskResponse.status}`);
 
       const { tasks } = await taskResponse.json();
-      if (!tasks) throw new Error('No tasks returned from AI generation.');
+      if (!tasks || !Array.isArray(tasks))
+        throw new Error('Invalid tasks data returned from AI generation.');
 
-      const goalsData = goals.map((goal, index) => ({
-        goal,
-        tasks: tasks[index] || []
-      }));
+      const goalsData = goals.map((goal, index) => {
+        const goalTasks = Array.isArray(tasks[index]) ? tasks[index] : [];
+        return {
+          goal,
+          tasks: goalTasks
+        };
+      });
 
       const success = await saveAITasks(goalsData, user.id);
       if (!success) throw new Error('Failed to save tasks');
@@ -78,7 +84,7 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-80">
         <h2 className="text-lg font-semibold mb-4">Set Your 3 Goals</h2>
 
@@ -86,13 +92,10 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
 
         <div className="space-y-2">
           {goals.map((goal, index) => (
-            <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded">
-              <span className="text-sm">{goal}</span>
-              <button
-                className="text-red-500 text-xs font-semibold"
-                onClick={() => handleRemoveGoal(index)}
-              >
-                Remove
+            <div key={index} className="flex items-center">
+              <div className="flex-1">{goal}</div>
+              <button onClick={() => handleRemoveGoal(index)} className="text-red-500">
+                <TrashIcon size={16} />
               </button>
             </div>
           ))}

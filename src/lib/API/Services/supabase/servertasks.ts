@@ -1,3 +1,6 @@
+//lib/API/Services/supabase/servertasks.ts
+'use server';
+
 import { SupabaseServerClient } from '../init/supabase';
 import { v4 as uuid } from 'uuid';
 
@@ -16,25 +19,21 @@ export interface Goal {
   created_at: string;
 }
 
-async function loadGoals(userId: string): Promise<Goal[]> {
-  'use server';
+export async function loadGoals(userId: string): Promise<Goal[]> {
   const supabase = SupabaseServerClient();
   const { data } = await supabase.from('user_profiles').select('goals').eq('id', userId).single();
   return data?.goals || [];
 }
 
-async function saveAITasks(goalsData: { goal: string; tasks: string[] }[], userId: string) {
-  'use server';
+export async function saveAITasks(goalsData: { goal: string; tasks: string[] }[], userId: string) {
   try {
     const supabase = SupabaseServerClient();
     const existingGoals = await loadGoals(userId);
 
     const updatedGoals = goalsData.map((goalData) => {
       const existingGoal = existingGoals.find((g) => g.name === goalData.goal);
-
       const goalId = existingGoal ? existingGoal.id : uuid();
       const existingTasks = existingGoal ? existingGoal.tasks : [];
-
       const newTasks = goalData.tasks.map((task) => ({
         id: uuid(),
         goalId,
@@ -42,7 +41,6 @@ async function saveAITasks(goalsData: { goal: string; tasks: string[] }[], userI
         isCompleted: false,
         lastCompleted: null
       }));
-
       return {
         id: goalId,
         name: goalData.goal,
@@ -57,12 +55,9 @@ async function saveAITasks(goalsData: { goal: string; tasks: string[] }[], userI
       .eq('id', userId);
 
     if (error) throw error;
-
     return true;
   } catch (error) {
     console.error('Error saving AI tasks:', error);
     return false;
   }
 }
-
-export { loadGoals, saveAITasks };
