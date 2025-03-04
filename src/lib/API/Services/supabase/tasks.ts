@@ -28,8 +28,13 @@ export const TasksAPI = {
   saveAITasks: async (goalsData: { goal: string; tasks: string[] }[], userId: string) => {
     try {
       const supabase = SupabaseServerClient();
-      const goals: Goal[] = goalsData.map((goalData) => {
-        const goalId = uuid();
+      const existingGoals = await TasksAPI.loadGoals(userId);
+
+      // Map new AI-generated goals
+      const newGoals = goalsData.map((goalData) => {
+        const existingGoal = existingGoals.find((g) => g.name === goalData.goal);
+        const goalId = existingGoal ? existingGoal.id : uuid();
+
         return {
           id: goalId,
           name: goalData.goal,
@@ -44,93 +49,16 @@ export const TasksAPI = {
         };
       });
 
-      await supabase
+      const { error } = await supabase
         .from('user_profiles')
-        .update({ goals, has_set_initial_goals: true })
+        .update({ goals: newGoals, has_set_initial_goals: true })
         .eq('id', userId);
+
+      if (error) throw error;
+
       return true;
     } catch (error) {
       console.error('Error saving AI tasks:', error);
-      return false;
-    }
-  },
-
-  addManualTask: async (goalId: string, taskText: string, userId: string) => {
-    try {
-      const supabase = SupabaseServerClient();
-      const goals = await TasksAPI.loadGoals(userId);
-      const updatedGoals = goals.map((goal) =>
-        goal.id === goalId
-          ? {
-              ...goal,
-              tasks: [
-                ...goal.tasks,
-                {
-                  id: uuid(),
-                  goalId,
-                  text: taskText,
-                  isCompleted: false,
-                  lastCompleted: null
-                }
-              ]
-            }
-          : goal
-      );
-
-      await supabase.from('user_profiles').update({ goals: updatedGoals }).eq('id', userId);
-      return true;
-    } catch (error) {
-      console.error('Error adding manual task:', error);
-      return false;
-    }
-  },
-
-  toggleTaskCompletion: async (goalId: string, taskId: string, userId: string) => {
-    try {
-      const supabase = SupabaseServerClient();
-      const goals = await TasksAPI.loadGoals(userId);
-      const updatedGoals = goals.map((goal) =>
-        goal.id === goalId
-          ? {
-              ...goal,
-              tasks: goal.tasks.map((task) =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      isCompleted: !task.isCompleted,
-                      lastCompleted: task.isCompleted ? null : new Date().toISOString()
-                    }
-                  : task
-              )
-            }
-          : goal
-      );
-
-      await supabase.from('user_profiles').update({ goals: updatedGoals }).eq('id', userId);
-      return true;
-    } catch (error) {
-      console.error('Error toggling task completion:', error);
-      return false;
-    }
-  },
-
-  removeTask: async (goalId: string, taskId: string, userId: string) => {
-    try {
-      const supabase = SupabaseServerClient();
-      const goals = await TasksAPI.loadGoals(userId);
-      const updatedGoals = goals.map((goal) =>
-        goal.id === goalId
-          ? {
-              ...goal,
-              tasks: goal.tasks.filter((task) => task.id !== taskId)
-            }
-          : goal
-      );
-
-      await supabase.from('user_profiles').update({ goals: updatedGoals }).eq('id', userId);
-      return true;
-    } catch (error) {
-      console.error('Error removing task:', error);
       return false;
     }
   }

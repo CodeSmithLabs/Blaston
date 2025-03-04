@@ -13,9 +13,9 @@ export async function generateTasks(messages: Message[]) {
   try {
     const response = await together.chat.completions.create({
       messages,
-      model: 'mistral-7b-instruct',
-      max_tokens: 100,
-      temperature: 0.7,
+      model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free',
+      max_tokens: 300,
+      temperature: 0.5,
       top_p: 0.7,
       top_k: 50,
       repetition_penalty: 1,
