@@ -11,12 +11,12 @@ import { ToastContainer } from 'react-toastify';
 export default async function AuthLayout({ children }: LayoutProps) {
   const sessionData = await getSupabaseUserSession(true);
 
-  if (sessionData?.user && !sessionData.user.profile) {
-    redirect(config.routes.confirmEpired.link);
-  }
+  // if (sessionData?.user && !sessionData.user.profile) {
+  //   redirect(config.routes.confirmEpired.link);
+  // }
 
   // Reverse Auth Guard
-  if (sessionData?.session) {
+  if (sessionData?.user && sessionData.user.profile) {
     redirect(config.redirects.toDashboard);
   }
 
