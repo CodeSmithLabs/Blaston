@@ -1,10 +1,15 @@
-//lib/togetherClient.ts
+// lib/togetherClient.ts
 import Together from 'together-ai';
 
 const TOGETHER_AI_API_KEY = process.env.TOGETHER_AI_API_KEY;
 const together = new Together({ apiKey: TOGETHER_AI_API_KEY });
 
-export async function generateTasks(messages: { role: string; content: string }[]) {
+interface Message {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+export async function generateTasks(messages: Message[]) {
   try {
     const response = await together.chat.completions.create({
       messages,
@@ -17,8 +22,6 @@ export async function generateTasks(messages: { role: string; content: string }[
       stop: ['<|eot_id|>', '<|eom_id|>'],
       stream: false
     });
-
-    console.log('API Response:', response);
 
     if (!response.choices || response.choices.length === 0) {
       throw new Error('No response from Together AI');
