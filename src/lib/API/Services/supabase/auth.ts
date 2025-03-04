@@ -1,4 +1,4 @@
-// supabase/auth.ts
+//lib/API/Services/supabase/auth.ts
 'use server';
 
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
@@ -13,11 +13,15 @@ export async function SupabaseSignIn(email: string, password: string): Promise<A
   const supabase = SupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
+  if (error) {
+    return { error: { message: error.message }, data: null };
+  }
+
   if (data?.session) {
     storeSessionCookies(data.session);
   }
 
-  return { error, data };
+  return { error: null, data };
 }
 
 export async function SupabaseSignUp(email: string, password: string): Promise<AuthResult> {

@@ -1,3 +1,4 @@
+// app/auth/layout.tsx
 import { MainLogoText, MainLogoIcon } from '@/components/MainLogo';
 import { Separator } from '@/components/ui/Separator';
 import { LayoutProps } from '@/lib/types/types';
@@ -8,10 +9,10 @@ import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
 import { ToastContainer } from 'react-toastify';
 
 export default async function AuthLayout({ children }: LayoutProps) {
-  const session = await getSupabaseUserSession(true);
+  const sessionData = await getSupabaseUserSession();
 
   // Reverse Auth Guard
-  if (session?.session) {
+  if (sessionData?.session) {
     redirect(config.redirects.toDashboard);
   }
 
