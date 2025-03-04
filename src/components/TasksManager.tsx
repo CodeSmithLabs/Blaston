@@ -10,13 +10,20 @@ export default function TasksManager() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
+    console.log('TasksAPI:', TasksAPI);
+    console.log('loadGoals:', TasksAPI?.loadGoals);
+
     const loadData = async () => {
       const userData = await getSupabaseUserSession(true);
       if (userData) {
         setUser(userData.user);
-        const goalsData = await TasksAPI.loadGoals(userData.user.id);
-        setGoals(goalsData);
-        setSelectedGoal(goalsData[0]?.id || '');
+        try {
+          const goalsData = await TasksAPI.loadGoals(userData.user.id);
+          setGoals(goalsData);
+          setSelectedGoal(goalsData[0]?.id || '');
+        } catch (error) {
+          console.error('Error loading goals:', error);
+        }
       }
     };
     loadData();

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
         }
       })
     );
-
+    console.log('Generated tasks:', tasks);
     return NextResponse.json({ tasks }, { status: 200 });
   } catch (error) {
     console.error('Error in /api/generate-tasks:', error);

@@ -50,6 +50,7 @@ export const TasksAPI = {
         .eq('id', userId);
       return true;
     } catch (error) {
+      console.error('Error saving AI tasks:', error);
       return false;
     }
   },
@@ -79,6 +80,7 @@ export const TasksAPI = {
       await supabase.from('user_profiles').update({ goals: updatedGoals }).eq('id', userId);
       return true;
     } catch (error) {
+      console.error('Error adding manual task:', error);
       return false;
     }
   },
@@ -107,6 +109,7 @@ export const TasksAPI = {
       await supabase.from('user_profiles').update({ goals: updatedGoals }).eq('id', userId);
       return true;
     } catch (error) {
+      console.error('Error toggling task completion:', error);
       return false;
     }
   },
@@ -127,6 +130,7 @@ export const TasksAPI = {
       await supabase.from('user_profiles').update({ goals: updatedGoals }).eq('id', userId);
       return true;
     } catch (error) {
+      console.error('Error removing task:', error);
       return false;
     }
   }
