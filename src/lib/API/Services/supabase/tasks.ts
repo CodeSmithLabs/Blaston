@@ -1,5 +1,3 @@
-// lib/API/Services/supabase/tasks.ts
-'use server';
 import { SupabaseServerClient } from '../init/supabase';
 import { v4 as uuid } from 'uuid';
 
@@ -8,7 +6,7 @@ export interface Task {
   goalId: string;
   text: string;
   isCompleted: boolean;
-  lastCompleted?: string;
+  lastCompleted?: string | null;
 }
 
 export interface Goal {
@@ -18,48 +16,53 @@ export interface Goal {
   created_at: string;
 }
 
-export const TasksAPI = {
-  loadGoals: async (userId: string): Promise<Goal[]> => {
+async function loadGoals(userId: string): Promise<Goal[]> {
+  'use server';
+  const supabase = SupabaseServerClient();
+  const { data } = await supabase.from('user_profiles').select('goals').eq('id', userId).single();
+  return data?.goals || [];
+}
+
+async function saveAITasks(goalsData: { goal: string; tasks: string[] }[], userId: string) {
+  'use server';
+  try {
     const supabase = SupabaseServerClient();
-    const { data } = await supabase.from('user_profiles').select('goals').eq('id', userId).single();
-    return data?.goals || [];
-  },
+    const existingGoals = await loadGoals(userId);
 
-  saveAITasks: async (goalsData: { goal: string; tasks: string[] }[], userId: string) => {
-    try {
-      const supabase = SupabaseServerClient();
-      const existingGoals = await TasksAPI.loadGoals(userId);
+    const updatedGoals = goalsData.map((goalData) => {
+      const existingGoal = existingGoals.find((g) => g.name === goalData.goal);
 
-      // Map new AI-generated goals
-      const newGoals = goalsData.map((goalData) => {
-        const existingGoal = existingGoals.find((g) => g.name === goalData.goal);
-        const goalId = existingGoal ? existingGoal.id : uuid();
+      const goalId = existingGoal ? existingGoal.id : uuid();
+      const existingTasks = existingGoal ? existingGoal.tasks : [];
 
-        return {
-          id: goalId,
-          name: goalData.goal,
-          tasks: goalData.tasks.map((task) => ({
-            id: uuid(),
-            goalId,
-            text: task,
-            isCompleted: false,
-            lastCompleted: null
-          })),
-          created_at: new Date().toISOString()
-        };
-      });
+      const newTasks = goalData.tasks.map((task) => ({
+        id: uuid(),
+        goalId,
+        text: task,
+        isCompleted: false,
+        lastCompleted: null
+      }));
 
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ goals: newGoals, has_set_initial_goals: true })
-        .eq('id', userId);
+      return {
+        id: goalId,
+        name: goalData.goal,
+        tasks: [...existingTasks, ...newTasks],
+        created_at: existingGoal ? existingGoal.created_at : new Date().toISOString()
+      };
+    });
 
-      if (error) throw error;
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ goals: updatedGoals, has_set_initial_goals: true })
+      .eq('id', userId);
 
-      return true;
-    } catch (error) {
-      console.error('Error saving AI tasks:', error);
-      return false;
-    }
+    if (error) throw error;
+
+    return true;
+  } catch (error) {
+    console.error('Error saving AI tasks:', error);
+    return false;
   }
-};
+}
+
+export { loadGoals, saveAITasks };
