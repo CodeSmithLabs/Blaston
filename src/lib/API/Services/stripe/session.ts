@@ -6,7 +6,7 @@ import { PortalSessionT, CreatePortalSessionPropsT } from '@/lib/types/stripe';
 import Stripe from 'stripe';
 import { StripeError } from '@/lib/utils/error';
 import { GetProfileByUserId } from '../../Database/profile/queries';
-import { SupabaseUser } from '../supabase/user';
+import { getSupabaseUserSession } from '../supabase/user';
 import configuration from '@/lib/config/site';
 
 interface createCheckoutProps {
@@ -17,9 +17,9 @@ export const createCheckoutSession = async ({ price }: createCheckoutProps) => {
   const { redirects } = config;
   const { toBilling, toSubscription } = redirects;
 
-  const user = await SupabaseUser();
-  const user_id = user.id;
-  const customer_email = user.email;
+  const user = await getSupabaseUserSession(true);
+  const user_id = user?.user?.id;
+  const customer_email = user?.user?.email;
   const origin = configuration.url;
 
   let session: Stripe.Checkout.Session;
@@ -53,8 +53,8 @@ export const createCheckoutSession = async ({ price }: createCheckoutProps) => {
 export const createPortalSession = async (): Promise<PortalSessionT> => {
   let portalSession: PortalSessionT;
 
-  const user = await SupabaseUser();
-  const profile = await GetProfileByUserId(user?.id);
+  const user = await getSupabaseUserSession(true);
+  const profile = await GetProfileByUserId(user?.user?.id);
   const customer = profile?.data?.[0]?.stripe_customer_id;
   const origin = configuration.url;
 

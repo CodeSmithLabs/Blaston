@@ -1,161 +1,177 @@
 // components/TasksManager.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { v4 as uuid } from 'uuid';
-import { TasksAPI, Task } from '@/lib/API/Services/supabase/tasks';
-import { SupabaseUser } from '@/lib/API/Services/supabase/user';
+import { useState, useEffect } from 'react';
+import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
+import {
+  loadGoals,
+  addManualTask,
+  removeTask,
+  toggleTaskCompletion,
+  Goal
+} from '@/app/actions/tasks';
+import { Trash2Icon } from 'lucide-react';
 
 export default function TasksManager() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [newGoal, setNewGoal] = useState('');
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [newTask, setNewTask] = useState('');
+  const [selectedGoal, setSelectedGoal] = useState<string>('');
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch user from API route
+  // Load user and goals on mount
   useEffect(() => {
-    async function fetchUser() {
-      const userData = await SupabaseUser();
-      setUser(userData);
-    }
-  }, []);
+    const loadData = async () => {
+      try {
+        const userData = await getSupabaseUserSession(true);
+        if (!userData?.user) throw new Error('User session not found');
 
-  // Load tasks from local storage
-  useEffect(() => {
-    const loaded = TasksAPI.loadTasks();
-    setTasks(loaded);
-  }, []);
-
-  // Save tasks to local storage
-  useEffect(() => {
-    TasksAPI.saveTasks(tasks);
-  }, [tasks]);
-
-  // Schedule midnight reset if user is available
-  useEffect(() => {
-    if (!user?.id) return;
-    const cleanup = TasksAPI.scheduleMidnightReset(setTasks, user.id);
-    return cleanup;
-  }, [user?.id]);
-
-  const handleAddGoal = useCallback(() => {
-    if (!newGoal.trim()) return;
-    const newTask: Task = {
-      id: uuid(),
-      goal: newGoal.trim(),
-      isCompleted: false,
-      lastCompletedDate: ''
+        setUser(userData.user);
+        const goalsData = await loadGoals(userData.user.id);
+        setGoals(goalsData);
+        setSelectedGoal(goalsData[0]?.id || '');
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setError('Failed to load tasks. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     };
-    setTasks((prev) => [...prev, newTask]);
-    setNewGoal('');
-  }, [newGoal]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleAddGoal();
+    loadData();
+  }, []);
+
+  const handleAddTask = async () => {
+    if (!newTask.trim() || !selectedGoal || !user?.id) return;
+
+    try {
+      setError(null);
+      await addManualTask(selectedGoal, newTask.trim(), user.id);
+
+      // Refresh goals
+      const updatedGoals = await loadGoals(user.id);
+      setGoals(updatedGoals);
+      setNewTask('');
+    } catch (error) {
+      console.error('Error adding task:', error);
+      setError('Failed to add task. Please try again.');
+    }
   };
 
-  const toggleCompletion = useCallback((id: string) => {
-    setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id === id) {
-          const today = new Date().toDateString();
-          const alreadyCompletedToday = t.lastCompletedDate === today;
-          return {
-            ...t,
-            isCompleted: !alreadyCompletedToday,
-            lastCompletedDate: !alreadyCompletedToday ? today : ''
-          };
-        }
-        return t;
-      })
-    );
-  }, []);
+  const handleRemoveTask = async (goalId: string, taskId: string) => {
+    if (!user?.id) return;
 
-  const editGoal = useCallback((id: string, updatedGoal: string) => {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, goal: updatedGoal } : t)));
-  }, []);
+    try {
+      setError(null);
+      await removeTask(goalId, taskId, user.id);
 
-  const removeGoal = useCallback((id: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+      // Refresh goals
+      const updatedGoals = await loadGoals(user.id);
+      setGoals(updatedGoals);
+    } catch (error) {
+      console.error('Error removing task:', error);
+      setError('Failed to remove task. Please try again.');
+    }
+  };
 
-  return (
-    <div className="text-card-foreground relative">
-      <div className="flex gap-2 mb-4 z-5">
-        <input
-          className="border border-border bg-input text-foreground px-2 py-1 rounded w-full focus:outline-none focus:ring-2 focus:ring-ring"
-          placeholder="Enter a goal"
-          value={newGoal}
-          onChange={(e) => setNewGoal(e.target.value)}
-          onKeyDown={handleKeyPress}
-        />
+  const handleToggleTask = async (goalId: string, taskId: string) => {
+    if (!user?.id) return;
+
+    try {
+      setError(null);
+      await toggleTaskCompletion(goalId, taskId, user.id);
+
+      // Refresh goals
+      const updatedGoals = await loadGoals(user.id);
+      setGoals(updatedGoals);
+    } catch (error) {
+      console.error('Error toggling task:', error);
+      setError('Failed to update task. Please try again.');
+    }
+  };
+
+  if (loading) {
+    return <div className="py-4 lg:px-16">Loading tasks...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="py-4 lg:px-16 text-red-500">
+        {error}
         <button
-          onClick={handleAddGoal}
-          className="text-accent-foreground px-4 py-1 rounded hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring font-serif bg-accent"
+          onClick={() => window.location.reload()}
+          className="ml-2 text-blue-500 hover:underline"
         >
-          Add Goal
+          Refresh
         </button>
       </div>
-
-      <ul className="space-y-2">
-        {tasks.map((task) => (
-          <li
-            key={task.id}
-            className="border border-border p-3 rounded flex justify-between items-center bg-card text-foreground"
-          >
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={task.isCompleted}
-                onChange={() => toggleCompletion(task.id)}
-                className="accent-primary"
-              />
-              <EditableGoal goal={task.goal} onSave={(val) => editGoal(task.id, val)} />
-            </div>
-            <button
-              onClick={() => removeGoal(task.id)}
-              className="text-destructive hover:text-destructive-foreground transition-colors"
-            >
-              Remove
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function EditableGoal({ goal, onSave }: { goal: string; onSave: (val: string) => void }) {
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(goal);
-
-  const handleSave = () => {
-    onSave(value);
-    setEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSave();
-  };
-
-  if (editing) {
-    return (
-      <input
-        className="border-b border-border focus:outline-none bg-transparent text-foreground"
-        autoFocus
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onBlur={handleSave}
-        onKeyDown={handleKeyDown}
-      />
     );
   }
 
   return (
-    <span
-      onClick={() => setEditing(true)}
-      className="cursor-pointer text-foreground hover:text-primary transition-colors"
-    >
-      {goal}
-    </span>
+    <div className="text-card-foreground relative">
+      <div className="flex gap-2 mb-4 z-5">
+        <select
+          value={selectedGoal}
+          onChange={(e) => setSelectedGoal(e.target.value)}
+          className="border border-border bg-input text-foreground px-2 py-1 rounded"
+        >
+          {goals.map((goal) => (
+            <option key={goal.id} value={goal.id}>
+              {goal.name}
+            </option>
+          ))}
+        </select>
+
+        <input
+          className="border border-border bg-input text-foreground px-2 py-1 rounded w-full focus:outline-none focus:ring-2 focus:ring-ring"
+          placeholder="Enter new task"
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
+        />
+
+        <button
+          onClick={handleAddTask}
+          disabled={!newTask.trim()}
+          className="bg-accent-primary text-accent-foreground px-4 py-1 rounded hover:bg-accent-primary-hover transition-colors hover:shadow-md hover:transform hover:scale-105 border border-accent-foreground"
+        >
+          Add Task
+        </button>
+      </div>
+
+      {goals.map((goal) => (
+        <div key={goal.id} className="mb-6">
+          <h3 className="text-lg font-semibold mb-2">{goal.name}</h3>
+          <ul className="space-y-2">
+            {goal.tasks.map((task) => (
+              <li
+                key={task.id}
+                className="border border-border p-3 rounded flex justify-between items-center bg-card text-foreground"
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={task.isCompleted}
+                    onChange={() => handleToggleTask(goal.id, task.id)}
+                    className="accent-primary"
+                  />
+                  <span className={task.isCompleted ? 'line-through opacity-75' : ''}>
+                    {task.text}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleRemoveTask(goal.id, task.id)}
+                  className="text-destructive hover:text-destructive-foreground transition-colors"
+                >
+                  <Trash2Icon size={20} className="hover:transform hover:scale-110" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }

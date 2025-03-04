@@ -2,76 +2,40 @@
 'use server';
 
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
-import { SupabaseAuthError } from '@/lib/utils/error';
-import { cookies } from 'next/headers';
+import { getSessionCookies } from '../../auth/cookies';
 
-export const SupabaseSession = async () => {
-  const accessToken = cookies().get('sb-access-token')?.value;
+export async function getSupabaseUserSession(includeSession = false) {
+  const { accessToken, refreshToken } = getSessionCookies();
+  if (!accessToken || !refreshToken) return { session: null, user: null };
+
   const supabase = SupabaseServerClient();
 
-  if (accessToken) {
-    const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
-
-    if (userError) {
-      console.log('User Error:', userError.message);
-      return { session: null };
+  try {
+    if (includeSession) {
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      });
+      if (sessionError) throw sessionError;
     }
 
-    if (userData?.user) {
-      const { data: profileData } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userData.user.id)
-        .single();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) throw userError || new Error('No user data');
 
-      return {
-        session: {
-          user: userData.user,
-          profile: profileData
-        }
-      };
-    }
+    const { data: profileData, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', userData.user.id)
+      .single();
+
+    if (profileError) throw profileError;
+
+    return {
+      session: includeSession ? userData : null,
+      user: { ...userData.user, profile: profileData }
+    };
+  } catch (error) {
+    console.error('Supabase user session error:', error);
+    return { session: null, user: null };
   }
-
-  return { session: null };
-};
-
-export const SupabaseUser = async () => {
-  const supabase = SupabaseServerClient();
-  const accessToken = cookies().get('sb-access-token')?.value;
-  const refreshToken = cookies().get('sb-refresh-token')?.value;
-
-  if (!accessToken || !refreshToken) {
-    return null;
-  }
-
-  const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken
-  });
-  if (sessionError) {
-    console.log('Session Error:', sessionError.message);
-    return null;
-  }
-
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData?.user) {
-    console.log('User Error:', userError?.message);
-    return null;
-  }
-
-  const { data: profileData, error: profileError } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', userData.user.id)
-    .single();
-
-  if (profileError) {
-    throw new Error(profileError.message);
-  }
-
-  return {
-    ...userData.user,
-    profile: profileData
-  };
-};
+}
