@@ -1,4 +1,4 @@
-//src/components/GoalSettingModal.tsx
+// src/components/GoalSettingModal.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -39,6 +39,7 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
     setError(null);
 
     try {
+      // Call the API to generate tasks
       const taskResponse = await fetch('/api/generate-tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,14 +52,13 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
       if (!tasks || !Array.isArray(tasks))
         throw new Error('Invalid tasks data returned from AI generation.');
 
-      const goalsData = goals.map((goal, index) => {
-        const goalTasks = Array.isArray(tasks[index]) ? tasks[index] : [];
-        return {
-          goal,
-          tasks: goalTasks
-        };
-      });
+      // Prepare data for saveAITasks
+      const goalsData = goals.map((goal, index) => ({
+        goal,
+        tasks: Array.isArray(tasks[index]) ? tasks[index] : []
+      }));
 
+      // Save tasks to Supabase
       const success = await saveAITasks(goalsData, user.id);
       if (!success) throw new Error('Failed to save tasks');
 
@@ -84,7 +84,7 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-80">
         <h2 className="text-lg font-semibold mb-4">Set Your 3 Goals</h2>
 

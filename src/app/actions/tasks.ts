@@ -25,7 +25,7 @@ export async function loadGoals(userId: string): Promise<Goal[]> {
   return data?.goals || [];
 }
 
-export async function saveAITasks(goalsData: { goal: string; tasks: any }[], userId: string) {
+export async function saveAITasks(goalsData: { goal: string; tasks: string[] }[], userId: string) {
   try {
     // Validate input
     if (!Array.isArray(goalsData)) {
@@ -36,7 +36,6 @@ export async function saveAITasks(goalsData: { goal: string; tasks: any }[], use
     const existingGoals = await loadGoals(userId);
 
     const updatedGoals = goalsData.map((goalData) => {
-      // Ensure tasks is an array
       const tasksArray = Array.isArray(goalData.tasks) ? goalData.tasks : [];
 
       const existingGoal = existingGoals.find((g) => g.name === goalData.goal);
@@ -47,7 +46,7 @@ export async function saveAITasks(goalsData: { goal: string; tasks: any }[], use
       const newTasks = tasksArray.map((task) => ({
         id: uuid(),
         goalId,
-        text: typeof task === 'string' ? task : 'New task', // Ensure task is a string
+        text: typeof task === 'string' ? task : 'New task',
         isCompleted: false,
         lastCompleted: null
       }));
