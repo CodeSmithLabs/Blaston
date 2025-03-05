@@ -22,7 +22,28 @@ export interface Goal {
 export async function loadGoals(userId: string): Promise<Goal[]> {
   const supabase = SupabaseServerClient();
   const { data } = await supabase.from('user_profiles').select('goals').eq('id', userId).single();
-  return data?.goals || [];
+  const goals = data?.goals || [];
+
+  const today = new Date().toISOString().split('T')[0];
+
+  let updated = false;
+  const updatedGoals = goals.map((goal) => {
+    const updatedTasks = goal.tasks.map((task) => {
+      if (task.isCompleted && task.lastCompleted && task.lastCompleted.split('T')[0] !== today) {
+        updated = true;
+        return { ...task, isCompleted: false, lastCompleted: null }; //
+      }
+      return task;
+    });
+
+    return { ...goal, tasks: updatedTasks };
+  });
+
+  if (updated) {
+    await supabase.from('user_profiles').update({ goals: updatedGoals }).eq('id', userId);
+  }
+
+  return updatedGoals;
 }
 
 export async function saveAITasks(goalsData: { goal: string; tasks: string[] }[], userId: string) {
