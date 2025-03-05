@@ -1,10 +1,10 @@
-// src/components/GoalSettingModal.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
+import { X, TrashIcon } from 'lucide-react';
 import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
 import { saveAITasks } from '@/app/actions/tasks';
-import { TrashIcon } from 'lucide-react';
 
 interface GoalSettingModalProps {
   isOpen: boolean;
@@ -39,7 +39,6 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
     setError(null);
 
     try {
-      // Call the API to generate tasks
       const taskResponse = await fetch('/api/generate-tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,16 +48,13 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
       if (!taskResponse.ok) throw new Error(`Task generation failed: ${taskResponse.status}`);
 
       const { tasks } = await taskResponse.json();
-      if (!tasks || !Array.isArray(tasks))
-        throw new Error('Invalid tasks data returned from AI generation.');
+      if (!tasks || !Array.isArray(tasks)) throw new Error('Invalid tasks data from AI.');
 
-      // Prepare data for saveAITasks
       const goalsData = goals.map((goal, index) => ({
         goal,
         tasks: Array.isArray(tasks[index]) ? tasks[index] : []
       }));
 
-      // Save tasks to Supabase
       const success = await saveAITasks(goalsData, user.id);
       if (!success) throw new Error('Failed to save tasks');
 
@@ -81,59 +77,67 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
     setGoals((prev) => prev.filter((_, i) => i !== index));
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-80">
-        <h2 className="text-lg font-semibold mb-4">Set Your 3 Goals</h2>
+    <Dialog.Root open={isOpen} onOpenChange={onClose}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        <Dialog.Content className="fixed top-1/2 left-1/2 w-full max-w-md transform -translate-x-1/2 -translate-y-1/2 bg-background text-foreground p-6 rounded-lg shadow-lg">
+          <Dialog.Close className="absolute top-3 right-3 text-foreground">
+            <X size={20} />
+          </Dialog.Close>
 
-        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
+          <h2 className="text-lg font-semibold">Enter Your Goals</h2>
+          <p className="text-sm text-muted-foreground">
+            Set up to 3 goals that you want to focus on.
+          </p>
 
-        <div className="space-y-2">
-          {goals.map((goal, index) => (
-            <div key={index} className="flex items-center">
-              <div className="flex-1">{goal}</div>
-              <button onClick={() => handleRemoveGoal(index)} className="text-red-500">
-                <TrashIcon size={16} />
-              </button>
-            </div>
-          ))}
-        </div>
+          {error && <p className="text-destructive text-sm mt-2">{error}</p>}
 
-        {goals.length < 3 && (
-          <div className="flex mt-2">
-            <input
-              type="text"
-              value={currentGoal}
-              onChange={(e) => setCurrentGoal(e.target.value)}
-              className="border p-2 flex-1 rounded-l"
-              placeholder="Enter a goal"
-            />
+          <div className="mt-4 space-y-3">
+            {goals.map((goal, index) => (
+              <div key={index} className="flex items-center gap-2 bg-card p-2 rounded">
+                <span className="flex-1 text-card-foreground">{goal}</span>
+                <button onClick={() => handleRemoveGoal(index)} className="text-destructive">
+                  <TrashIcon size={16} />
+                </button>
+              </div>
+            ))}
+
+            {goals.length < 3 && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={currentGoal}
+                  onChange={(e) => setCurrentGoal(e.target.value)}
+                  className="w-full p-2 border border-border rounded bg-background text-foreground"
+                  placeholder={`Goal ${goals.length + 1}`}
+                />
+                <button
+                  onClick={handleAddGoal}
+                  className="text-primary hover:text-primary-foreground transition"
+                  disabled={!currentGoal.trim()}
+                >
+                  + Add
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 flex justify-end">
             <button
-              onClick={handleAddGoal}
-              className="bg-blue-500 text-white px-3 rounded-r"
-              disabled={!currentGoal.trim()}
+              onClick={handleFinalizeGoals}
+              className={`px-4 py-2 rounded ${
+                goals.length === 3
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
+              } transition`}
+              disabled={goals.length !== 3 || isGenerating}
             >
-              Add
+              {isGenerating ? 'Saving...' : 'Save Goals'}
             </button>
           </div>
-        )}
-
-        <button
-          onClick={handleFinalizeGoals}
-          className={`mt-4 w-full p-2 rounded ${
-            goals.length === 3 ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-500'
-          }`}
-          disabled={goals.length !== 3 || isGenerating}
-        >
-          {isGenerating ? 'Saving...' : 'Finalize'}
-        </button>
-
-        <button onClick={onClose} className="mt-2 w-full text-center text-sm text-gray-500">
-          Cancel
-        </button>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 };

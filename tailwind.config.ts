@@ -8,7 +8,13 @@ const config: Config = {
       colors: {
         'lockedin-purple-light': '#9B4CDA',
         'lockedin-purple': '#7D3CBD',
-        'lockedin-purple-dark': '#4B2380'
+        'lockedin-purple-dark': '#4B2380',
+        'lockedin-purple-darker': '#2D1A4A',
+        'lockedin-purple-darkest': '#1A1030',
+        'lockedin-purple-lighter': '#B76BFF',
+        'lockedin-purple-lightest': '#E0B3FF',
+        'lockedin-purple-muted': '#7D3CBD',
+        'lockedin-purple-muted-light': '#9B4CDA'
       },
       borderRadius: {
         lg: `var(--radius)`,
