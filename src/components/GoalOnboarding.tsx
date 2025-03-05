@@ -24,8 +24,8 @@ export default function GoalOnboarding({
           <div className="bg-card text-card-foreground p-6 rounded-lg shadow-lg max-w-md text-center border border-border">
             <h2 className="text-xl font-semibold">Welcome to LockedIn</h2>
             <p className="mt-2 text-muted-foreground">
-              Get started by setting 3 key goals. We'll generate daily tasks to help you achieve
-              them.
+              Get started by setting 3 key goals. We&apos;ll generate daily tasks to help you
+              achieve them.
             </p>
             <button
               onClick={handleProceed}
