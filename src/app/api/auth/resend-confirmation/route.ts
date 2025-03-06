@@ -1,3 +1,4 @@
+//api/auth/resend-confirmation
 import { NextResponse } from 'next/server';
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 

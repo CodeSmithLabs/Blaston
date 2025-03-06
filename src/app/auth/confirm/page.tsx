@@ -1,11 +1,12 @@
-// app/auth/auth-confirm/page.tsx
+// app/auth/confirm/page.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function AuthConfirmPage() {
   const router = useRouter();
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -19,7 +20,7 @@ export default function AuthConfirmPage() {
     const refresh_token = params.get('refresh_token');
 
     if (access_token && refresh_token) {
-      fetch('/api/auth/callback', {
+      fetch('/api/auth/complete-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -27,19 +28,23 @@ export default function AuthConfirmPage() {
       })
         .then(async (res) => {
           if (!res.ok) {
-            router.push('/auth/confirm-expired');
+            setError(true);
             return;
           }
           await res.json();
           router.push('/dashboard/tasks');
         })
         .catch(() => {
-          router.push('/auth/confirm-expired');
+          setError(true);
         });
     } else {
       router.push('/');
     }
   }, [router]);
+
+  if (error) {
+    router.push('/auth/signup-error');
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen">

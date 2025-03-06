@@ -1,4 +1,4 @@
-//api/auth/callback/route.ts
+//api/auth/complete-signup/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import { storeSessionCookies } from '@/lib/API/auth/cookies';
@@ -10,8 +10,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing tokens' }, { status: 400 });
     }
 
-    storeSessionCookies({ access_token, refresh_token });
-
     const supabase = SupabaseServerClient();
     const { data: user, error } = await supabase.auth.getUser(access_token);
 
@@ -20,6 +18,8 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = user.user.id;
+
+    // Check if profile exists
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('id')
@@ -27,16 +27,23 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!profile) {
-      await supabase.from('user_profiles').insert({
+      const { error: profileError } = await supabase.from('user_profiles').insert({
         id: userId,
         display_name: user.user.email.split('@')[0],
         goals: []
       });
+
+      if (profileError) {
+        return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
+      }
     }
+
+    // Store session cookies
+    storeSessionCookies({ access_token, refresh_token });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Auth error:', error);
-    return NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
+    console.error('Signup error:', error);
+    return NextResponse.json({ error: 'Signup failed' }, { status: 500 });
   }
 }
