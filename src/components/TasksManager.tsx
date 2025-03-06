@@ -107,36 +107,6 @@ export default function TasksManager() {
 
   return (
     <div className="text-card-foreground relative">
-      <div className="flex flex-col sm:flex-row gap-2 mb-4 z-5">
-        <select
-          value={selectedGoal}
-          onChange={(e) => setSelectedGoal(e.target.value)}
-          className="border border-border bg-input text-foreground px-2 py-2 rounded w-full sm:w-auto"
-        >
-          {goals.map((goal) => (
-            <option key={goal.id} value={goal.id}>
-              {goal.name}
-            </option>
-          ))}
-        </select>
-
-        <input
-          className="border border-border bg-input text-foreground px-2 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-ring"
-          placeholder="Enter new task"
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
-        />
-
-        <button
-          onClick={handleAddTask}
-          disabled={!newTask.trim()}
-          className="bg-accent-primary text-accent-foreground px-4 py-2 rounded hover:bg-accent-primary-hover transition-colors hover:shadow-md hover:transform hover:scale-105 border border-accent-foreground w-full sm:w-auto"
-        >
-          Add Task
-        </button>
-      </div>
-
       {goals.map((goal) => (
         <div key={goal.id} className="mb-6">
           <h3 className="text-lg font-semibold mb-2">{goal.name}</h3>
@@ -168,6 +138,36 @@ export default function TasksManager() {
           </ul>
         </div>
       ))}
+
+      <div className="flex flex-col sm:flex-row gap-2 mt-4 z-5">
+        <select
+          value={selectedGoal}
+          onChange={(e) => setSelectedGoal(e.target.value)}
+          className="border border-border bg-input text-foreground px-2 py-2 rounded w-full sm:w-auto"
+        >
+          {goals.map((goal) => (
+            <option key={goal.id} value={goal.id}>
+              {goal.name}
+            </option>
+          ))}
+        </select>
+
+        <input
+          className="border border-border bg-input text-foreground px-2 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-ring"
+          placeholder="Enter new task"
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
+        />
+
+        <button
+          onClick={handleAddTask}
+          disabled={!newTask.trim()}
+          className="bg-accent-primary text-accent-foreground px-4 py-2 rounded hover:bg-accent-primary-hover transition-colors hover:shadow-md hover:transform hover:scale-105 border border-accent-foreground w-full sm:w-auto"
+        >
+          Add Task
+        </button>
+      </div>
     </div>
   );
 }
