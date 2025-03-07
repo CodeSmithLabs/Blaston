@@ -156,7 +156,10 @@ export default function LoginPage() {
           <div className="flex flex-col">
             <div className="text-center text-sm text-gray-500">
               Don&apos;t have an account?{' '}
-              <Link href="/auth/signup" className="leading-7 text-indigo-600 hover:text-indigo-500">
+              <Link
+                href="/auth/signup"
+                className="leading-7 text-lockedin-blue hover:text-lockedin-blue-dark"
+              >
                 Sign up here.
               </Link>
             </div>
