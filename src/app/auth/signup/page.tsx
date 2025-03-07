@@ -59,7 +59,7 @@ export default function AuthForm() {
       }
 
       toast.success('Signup successful! Check your email for verification.');
-      router.push(config.redirects.checkEmail);
+      router.push(config.routes.checkEmail.link);
     } catch (error) {
       toast.error('Something went wrong. Please try again.');
     }

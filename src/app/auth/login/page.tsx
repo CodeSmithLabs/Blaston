@@ -1,4 +1,3 @@
-//auth/login/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -29,59 +28,55 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
+  const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
+
   const form = useForm<authFormValues>({
     resolver: zodResolver(authFormSchema),
-    defaultValues: {
-      email: '',
-      password: ''
-    }
+    defaultValues: { email: '', password: '' }
   });
 
-  const {
-    register,
-    handleSubmit,
-    setError,
-    reset,
-    formState: { isSubmitting }
-  } = form;
+  const { register, handleSubmit, setError, reset, formState } = form;
+  const isSubmitting = formState.isSubmitting;
 
   const onSubmit = async (values: authFormValues) => {
     try {
+      // Sign in the user
       const response = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          email: values.email,
-          password: values.password
-        })
+        body: JSON.stringify(values)
       });
-
       const data = await response.json();
-
       if (!response.ok) {
         toast.error(data.error || 'Login failed');
         reset({ email: values.email, password: '' });
         setError('email', { type: 'root.serverError', message: data.error });
-        setError('password', { type: 'root.serverError', message: '' });
         return;
       }
 
-      // Success
       toast.success('Login successful!');
-      router.push(config.redirects.toDashboard);
+
+      // Check if the user's profile exists in real time
+      const profileRes = await fetch('/api/auth/ensure-profile', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      const profileData = await profileRes.json();
+
+      if (profileRes.ok && profileData.profileExists) {
+        router.push(config.redirects.toDashboard);
+      } else {
+        router.push(config.routes.completeSignup.link);
+      }
     } catch (error: any) {
       console.error('Login error:', error);
       toast.error('An unexpected error occurred');
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword((prevShowPassword) => !prevShowPassword);
-  };
-
   return (
-    <>
+    <div className="flex justify-center items-center min-h-screen">
       <Card className="bg-background-light dark:bg-background-dark">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl">Login to LockedIn</CardTitle>
@@ -90,7 +85,6 @@ export default function LoginPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-              {/* Email */}
               <FormField
                 control={form.control}
                 name="email"
@@ -111,7 +105,6 @@ export default function LoginPage() {
                 )}
               />
 
-              {/* Password */}
               <FormField
                 control={form.control}
                 name="password"
@@ -166,6 +159,6 @@ export default function LoginPage() {
           </div>
         </CardFooter>
       </Card>
-    </>
+    </div>
   );
 }
