@@ -3,6 +3,7 @@
 
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import { storeSessionCookies, clearSessionCookies } from '@/lib/API/auth/cookies';
+import { getUserProfile } from './user';
 
 type AuthResult = {
   error: { message: string } | null;
@@ -18,7 +19,12 @@ export async function SupabaseSignIn(email: string, password: string): Promise<A
   }
 
   if (data?.session) {
-    storeSessionCookies(data.session);
+    const profile = await getUserProfile(data.user.id);
+    if (profile) {
+      storeSessionCookies(data.session);
+    } else {
+      clearSessionCookies();
+    }
   }
 
   return { error: null, data };

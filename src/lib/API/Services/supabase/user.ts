@@ -24,3 +24,13 @@ export async function ensureUserProfile() {
   const profile = await getUserProfile(sessionData.user.id);
   return { ...sessionData, profile };
 }
+
+export async function createUserProfile(userId: string, email: string) {
+  const supabase = SupabaseServerClient();
+  const { error } = await supabase.from('user_profiles').insert({
+    id: userId,
+    display_name: email.split('@')[0],
+    goals: []
+  });
+  return error;
+}

@@ -40,34 +40,40 @@ export default function LoginPage() {
 
   const onSubmit = async (values: authFormValues) => {
     try {
-      // Sign in the user
       const response = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(values)
       });
+
       const data = await response.json();
       if (!response.ok) {
-        toast.error(data.error || 'Login failed');
         reset({ email: values.email, password: '' });
         setError('email', { type: 'root.serverError', message: data.error });
         return;
       }
 
-      toast.success('Login successful!');
-
-      // Check if the user's profile exists in real time
-      const profileRes = await fetch('/api/auth/ensure-profile', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const profileData = await profileRes.json();
-
-      if (profileRes.ok && profileData.profileExists) {
+      if (data.profileExists) {
+        toast.success('Login successful!');
         router.push(config.redirects.toDashboard);
       } else {
-        router.push(config.routes.completeSignup.link);
+        toast.info('Hold on! We’re setting things up for you…');
+
+        // Call API to create user profile
+        const profileResponse = await fetch('/api/auth/create-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ userId: data.user.id, email: data.user.email })
+        });
+
+        if (profileResponse.ok) {
+          toast.success('All set! Redirecting you now...');
+          router.push(config.redirects.toDashboard);
+        } else {
+          toast.error('Something went wrong while setting up your profile. Try again later.');
+        }
       }
     } catch (error: any) {
       console.error('Login error:', error);
