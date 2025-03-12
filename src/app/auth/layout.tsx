@@ -4,12 +4,9 @@ import { MainLogoText } from '@/components/MainLogo';
 import { Separator } from '@/components/ui/Separator';
 import { LayoutProps } from '@/lib/types/types';
 import { ThemeDropDownMenu } from '@/components/ThemeDropdown';
-import { ensureUserProfile } from '@/lib/API/Services/supabase/user';
 import { ToastContainer } from 'react-toastify';
 
 export default async function AuthLayout({ children }: LayoutProps) {
-  const sessionData = await ensureUserProfile();
-
   return (
     <>
       <ToastContainer />

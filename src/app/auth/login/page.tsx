@@ -60,7 +60,6 @@ export default function LoginPage() {
       } else {
         toast.info('Hold on! We’re setting things up for you…');
 
-        // Call API to create user profile
         const profileResponse = await fetch('/api/auth/create-profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
