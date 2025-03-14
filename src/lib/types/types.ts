@@ -25,19 +25,4 @@ export interface PlanI {
   isPopular?: boolean;
 }
 
-export interface ProductI {
-  name: string;
-  description: string;
-  features: string[];
-  plans: PlanI[];
-}
-
 export type ServerError = AuthError | PostgrestError | null;
-
-export interface UserProfile {
-  id: string;
-  display_name: string;
-  goals: any[];
-  avatar_url: string;
-  has_set_initial_goals: boolean;
-}

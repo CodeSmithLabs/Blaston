@@ -2,7 +2,7 @@
 'use server';
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import { cookies } from 'next/headers';
-import { UserProfile } from '@/lib/types/types';
+import { ProfileT } from '@/lib/types/supabase';
 
 export async function getSupabaseUserSession() {
   const supabase = SupabaseServerClient();
@@ -54,7 +54,7 @@ export async function createUserProfile(userId: string, email: string) {
   return error;
 }
 
-export async function updateUserProfile(userId: string, updates: Partial<Omit<UserProfile, 'id'>>) {
+export async function updateUserProfile(userId: string, updates: Partial<Omit<ProfileT, 'id'>>) {
   const supabase = SupabaseServerClient();
 
   const { error } = await supabase.from('user_profiles').update(updates).eq('id', userId);
