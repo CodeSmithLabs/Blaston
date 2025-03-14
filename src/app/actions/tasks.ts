@@ -3,21 +3,7 @@
 
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import { v4 as uuid } from 'uuid';
-
-export interface Task {
-  id: string;
-  goalId: string;
-  text: string;
-  isCompleted: boolean;
-  lastCompleted?: string | null;
-}
-
-export interface Goal {
-  id: string;
-  name: string;
-  tasks: Task[];
-  created_at: string;
-}
+import { Goal, Task } from '@/lib/types/todos';
 
 export async function loadGoals(userId: string): Promise<Goal[]> {
   const supabase = SupabaseServerClient();
