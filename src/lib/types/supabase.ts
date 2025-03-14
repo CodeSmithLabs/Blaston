@@ -1,29 +1,14 @@
+//lib/types/supabase.ts
 import { Session, User } from '@supabase/supabase-js';
 import { AuthError } from '@supabase/supabase-js';
 
-export type ProfileT = {
-  display_name?: string | null;
+export interface ProfileT {
   id: string;
-  stripe_customer_id?: string | null;
-  subscription_id?: string | null;
-};
-
-export type SubscriptionT = {
-  created_at: string | Date | null;
-  id: string;
-  period_ends_at: string | null;
-  period_starts_at: string | null;
-  price_id: string;
-  status: string;
-};
-
-export type TodosT = {
-  author: string | null;
-  description: string | null;
-  id: string;
-  title: string | null;
-  user_id: string;
-};
+  display_name: string;
+  goals: any[];
+  avatar_url: string;
+  has_set_initial_goals: boolean;
+}
 
 export type TSupabaseUserSession =
   | {

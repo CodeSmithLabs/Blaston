@@ -12,15 +12,15 @@ import { useRouter } from 'next/navigation';
 import { SupabaseSignOut } from '@/lib/API/Services/supabase/auth';
 import { ThemeDropDownMenu } from '@/components/ThemeDropdown';
 import { useState } from 'react';
+import { useUserProfile } from '@/context/UserProfileContext';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
-  displayName?: string;
-  email?: string;
 }
 
-export default function Header({ onToggleSidebar, displayName, email }: HeaderProps) {
+export default function Header({ onToggleSidebar }: HeaderProps) {
   const router = useRouter();
+  const { userProfile, updateProfileField, syncProfileWithSupabase } = useUserProfile();
 
   const handleLogout = async () => {
     const { error } = await SupabaseSignOut();
@@ -41,8 +41,11 @@ export default function Header({ onToggleSidebar, displayName, email }: HeaderPr
       </button>
 
       <EditableDisplayName
-        initialName={displayName || email?.split('@')[0] || 'Tasks'}
-        fullEmail={email}
+        initialName={userProfile?.display_name || userProfile?.email?.split('@')[0] || 'Tasks'}
+        onSave={(newName) => {
+          updateProfileField('display_name', newName);
+          syncProfileWithSupabase();
+        }}
       />
 
       <div className="flex items-center gap-2">
@@ -54,7 +57,7 @@ export default function Header({ onToggleSidebar, displayName, email }: HeaderPr
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-popover text-popover-foreground rounded-md shadow p-1">
             <div className="px-3 py-1 text-sm border-b border-border">
-              {email || displayName || 'No Email'}
+              {userProfile?.email || userProfile?.display_name || 'No Email'}
             </div>
             <DropdownMenuItem
               className="flex items-center gap-2 px-3 py-1 cursor-pointer hover:bg-muted transition-colors text-red-600 hover:text-red-700"
@@ -72,30 +75,18 @@ export default function Header({ onToggleSidebar, displayName, email }: HeaderPr
 
 function EditableDisplayName({
   initialName,
-  fullEmail
+  onSave
 }: {
   initialName: string;
-  fullEmail?: string;
+  onSave: (name: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(initialName);
 
-  const handleSave = async () => {
+  const handleSave = () => {
     setEditing(false);
-    try {
-      const res = await fetch('/api/user', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ display_name: value })
-      });
-      const data = await res.json();
-
-      if (data.success && data.profile) {
-        setValue(data.profile.display_name);
-      }
-    } catch (err) {
-      console.error('Failed to update display name:', err);
+    if (value.trim() !== initialName) {
+      onSave(value.trim());
     }
   };
 
@@ -110,7 +101,7 @@ function EditableDisplayName({
       <input
         className="text-lg font-semibold text-primary bg-transparent border-b border-border focus:outline-none focus:border-primary font-mono"
         autoFocus
-        value={value ?? ''} // Prevents undefined errors
+        value={value}
         onChange={(e) => setValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}

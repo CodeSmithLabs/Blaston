@@ -1,31 +1,9 @@
 // app/dashboard/layout.tsx
-import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
-import { redirect } from 'next/navigation';
-import config from '@/lib/config/auth';
+'use client';
+
 import DashboardShell from '@/components/DashboardShell';
 import { LayoutProps } from '@/lib/types/types';
-import { ToastContainer } from 'react-toastify';
 
-export default async function DashboardLayout({ children }: LayoutProps) {
-  const sessionData = await getSupabaseUserSession(true);
-
-  if (!sessionData?.session) {
-    redirect(config.routes.login.link);
-  }
-
-  if (!sessionData.user?.profile) {
-    redirect(config.routes.confirmEpired.link);
-  }
-
-  const displayName = sessionData.user.profile.display_name ?? 'User';
-  const email = sessionData.user.email ?? '';
-
-  return (
-    <>
-      <ToastContainer />
-      <DashboardShell displayName={displayName} email={email}>
-        {children}
-      </DashboardShell>
-    </>
-  );
+export default function DashboardLayout({ children }: LayoutProps) {
+  return <DashboardShell>{children}</DashboardShell>;
 }

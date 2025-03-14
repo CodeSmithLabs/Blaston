@@ -1,15 +1,16 @@
-// lib/auth/cookies.ts
+// lib/API/auth/cookies.ts
 import { cookies } from 'next/headers';
 
-const isProduction = process.env.NODE_ENV === 'production';
-
-export function storeSessionCookies(session: { access_token: string; refresh_token: string }) {
-  if (!session?.access_token || !session?.refresh_token) return;
-
+export function storeSessionCookies(
+  session: { access_token: string; refresh_token: string },
+  profile: any
+) {
+  // (You can still store session tokens if needed.)
+  const isProduction = process.env.NODE_ENV === 'production';
   const cookieOptions = {
     httpOnly: true,
     secure: isProduction,
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 24 * 7, // 7 days,
     path: '/'
   };
 
@@ -17,14 +18,8 @@ export function storeSessionCookies(session: { access_token: string; refresh_tok
   cookies().set('sb-refresh-token', session.refresh_token, cookieOptions);
 }
 
-export function getSessionCookies() {
-  return {
-    accessToken: cookies().get('sb-access-token')?.value || null,
-    refreshToken: cookies().get('sb-refresh-token')?.value || null
-  };
-}
-
 export function clearSessionCookies() {
   cookies().delete('sb-access-token');
   cookies().delete('sb-refresh-token');
+  cookies().delete('user-profile');
 }

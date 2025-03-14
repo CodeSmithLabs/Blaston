@@ -25,11 +25,4 @@ export interface PlanI {
   isPopular?: boolean;
 }
 
-export interface ProductI {
-  name: string;
-  description: string;
-  features: string[];
-  plans: PlanI[];
-}
-
 export type ServerError = AuthError | PostgrestError | null;

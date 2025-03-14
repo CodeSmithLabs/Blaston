@@ -1,55 +1,47 @@
 // components/TasksManager.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
-import {
-  loadGoals,
-  addManualTask,
-  removeTask,
-  toggleTaskCompletion,
-  Goal
-} from '@/app/actions/tasks';
+import { useState } from 'react';
+import { addManualTask, removeTask, toggleTaskCompletion } from '@/app/actions/tasks';
 import { Trash2Icon } from 'lucide-react';
+import { useUserProfile } from '@/context/UserProfileContext';
 
 export default function TasksManager() {
-  const [goals, setGoals] = useState<Goal[]>([]);
+  const { userProfile, updateProfileField } = useUserProfile();
   const [newTask, setNewTask] = useState('');
-  const [selectedGoal, setSelectedGoal] = useState<string>('');
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [selectedGoal, setSelectedGoal] = useState(userProfile?.goals[0]?.id || '');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const userData = await getSupabaseUserSession(true);
-        if (!userData?.user) throw new Error('User session not found');
+  if (!userProfile) {
+    return <div className="py-4 lg:px-16">Loading user profile...</div>;
+  }
 
-        setUser(userData.user);
-        const goalsData = await loadGoals(userData.user.id);
-        setGoals(goalsData);
-        setSelectedGoal(goalsData[0]?.id || '');
-      } catch (error) {
-        console.error('Error loading data:', error);
-        setError('Failed to load tasks. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { id: userId, goals } = userProfile;
 
-    loadData();
-  }, []);
+  const updateGoalsLocally = (updatedGoals) => {
+    updateProfileField('goals', updatedGoals);
+  };
 
   const handleAddTask = async () => {
-    if (!newTask.trim() || !selectedGoal || !user?.id) return;
+    if (!newTask.trim() || !selectedGoal) return;
 
     try {
       setError(null);
-      await addManualTask(selectedGoal, newTask.trim(), user.id);
+      await addManualTask(selectedGoal, newTask.trim(), userId);
 
-      const updatedGoals = await loadGoals(user.id);
-      setGoals(updatedGoals);
+      const updatedGoals = goals.map((goal) =>
+        goal.id === selectedGoal
+          ? {
+              ...goal,
+              tasks: [
+                ...goal.tasks,
+                { id: crypto.randomUUID(), text: newTask.trim(), isCompleted: false }
+              ]
+            }
+          : goal
+      );
+
+      updateGoalsLocally(updatedGoals);
       setNewTask('');
     } catch (error) {
       console.error('Error adding task:', error);
@@ -58,14 +50,17 @@ export default function TasksManager() {
   };
 
   const handleRemoveTask = async (goalId: string, taskId: string) => {
-    if (!user?.id) return;
-
     try {
       setError(null);
-      await removeTask(goalId, taskId, user.id);
+      await removeTask(goalId, taskId, userId);
 
-      const updatedGoals = await loadGoals(user.id);
-      setGoals(updatedGoals);
+      const updatedGoals = goals.map((goal) =>
+        goal.id === goalId
+          ? { ...goal, tasks: goal.tasks.filter((task) => task.id !== taskId) }
+          : goal
+      );
+
+      updateGoalsLocally(updatedGoals);
     } catch (error) {
       console.error('Error removing task:', error);
       setError('Failed to remove task. Please try again.');
@@ -73,37 +68,27 @@ export default function TasksManager() {
   };
 
   const handleToggleTask = async (goalId: string, taskId: string) => {
-    if (!user?.id) return;
-
     try {
       setError(null);
-      await toggleTaskCompletion(goalId, taskId, user.id);
+      await toggleTaskCompletion(goalId, taskId, userId);
 
-      const updatedGoals = await loadGoals(user.id);
-      setGoals(updatedGoals);
+      const updatedGoals = goals.map((goal) =>
+        goal.id === goalId
+          ? {
+              ...goal,
+              tasks: goal.tasks.map((task) =>
+                task.id === taskId ? { ...task, isCompleted: !task.isCompleted } : task
+              )
+            }
+          : goal
+      );
+
+      updateGoalsLocally(updatedGoals);
     } catch (error) {
       console.error('Error toggling task:', error);
       setError('Failed to update task. Please try again.');
     }
   };
-
-  if (loading) {
-    return <div className="py-4 lg:px-16">Loading tasks...</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="py-4 lg:px-16 text-red-500">
-        {error}
-        <button
-          onClick={() => window.location.reload()}
-          className="ml-2 text-blue-500 hover:underline"
-        >
-          Refresh
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="text-card-foreground relative">
@@ -168,6 +153,15 @@ export default function TasksManager() {
           Add Task
         </button>
       </div>
+
+      {error && (
+        <div className="py-4 lg:px-16 text-red-500">
+          {error}
+          <button onClick={() => setError(null)} className="ml-2 text-blue-500 hover:underline">
+            Dismiss
+          </button>
+        </div>
+      )}
     </div>
   );
 }

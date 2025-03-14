@@ -1,45 +1,31 @@
 // src/components/GoalSettingModal.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
+import { useState } from 'react';
 import { saveAITasks } from '@/app/actions/tasks';
+import { useUserProfile } from '@/context/UserProfileContext';
 import { TrashIcon } from 'lucide-react';
 
 interface GoalSettingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  userProfile: any;
 }
 
-export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => {
+export const GoalSettingModal = ({ isOpen, onClose, userProfile }: GoalSettingModalProps) => {
+  const { updateProfileField, syncProfileWithSupabase } = useUserProfile();
   const [goals, setGoals] = useState<string[]>([]);
   const [currentGoal, setCurrentGoal] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userData = await getSupabaseUserSession(true);
-        if (!userData?.user) throw new Error('User session not found');
-        setUser(userData.user);
-      } catch (error) {
-        console.error('Failed to fetch user:', error);
-        setError('Failed to load user session.');
-      }
-    };
-    fetchUser();
-  }, []);
-
   const handleFinalizeGoals = async () => {
-    if (goals.length !== 3 || !user?.id) return;
+    if (goals.length !== 3 || !userProfile?.id) return;
 
     setIsGenerating(true);
     setError(null);
 
     try {
-      // Call the API to generate tasks
       const taskResponse = await fetch('/api/generate-tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,21 +35,22 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
       if (!taskResponse.ok) throw new Error(`Task generation failed: ${taskResponse.status}`);
 
       const { tasks } = await taskResponse.json();
-      if (!tasks || !Array.isArray(tasks))
-        throw new Error('Invalid tasks data returned from AI generation.');
+      if (!tasks || !Array.isArray(tasks)) throw new Error('Invalid tasks data returned.');
 
-      // Prepare data for saveAITasks
       const goalsData = goals.map((goal, index) => ({
         goal,
         tasks: Array.isArray(tasks[index]) ? tasks[index] : []
       }));
 
-      // Save tasks to Supabase
-      const success = await saveAITasks(goalsData, user.id);
+      const success = await saveAITasks(goalsData, userProfile.id);
       if (!success) throw new Error('Failed to save tasks');
 
+      // ✅ Update profile to mark initial goals as set
+      updateProfileField('has_set_initial_goals', true);
+      await syncProfileWithSupabase();
+
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Task processing error:', error);
       setError(error.message || 'An unexpected error occurred.');
     } finally {
@@ -93,7 +80,7 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
         <div className="space-y-2">
           {goals.map((goal, index) => (
             <div key={index} className="flex items-center">
-              <div className="flex-1">{goal}</div>
+              <div className="flex-1 text-lockedin-purple">{goal}</div>
               <button onClick={() => handleRemoveGoal(index)} className="text-red-500">
                 <TrashIcon size={16} />
               </button>
@@ -112,7 +99,7 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
             />
             <button
               onClick={handleAddGoal}
-              className="bg-blue-500 text-white px-3 rounded-r"
+              className="bg-lockedin-purple text-white px-3 rounded-r hover:bg-lockedin-purple-dark"
               disabled={!currentGoal.trim()}
             >
               Add
@@ -123,7 +110,7 @@ export const GoalSettingModal = ({ isOpen, onClose }: GoalSettingModalProps) => 
         <button
           onClick={handleFinalizeGoals}
           className={`mt-4 w-full p-2 rounded ${
-            goals.length === 3 ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-500'
+            goals.length === 3 ? 'bg-lockedin-purple text-white' : 'bg-gray-200 text-gray-500'
           }`}
           disabled={goals.length !== 3 || isGenerating}
         >

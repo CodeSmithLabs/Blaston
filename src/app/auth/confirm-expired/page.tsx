@@ -1,8 +1,10 @@
+//auth/confirm-expired/page.tsx
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 export default function ConfirmExpiredPage() {
   const [email, setEmail] = useState('');
@@ -30,17 +32,17 @@ export default function ConfirmExpiredPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Link Expired or Invalid</h1>
-        <p className="mb-6 text-gray-600">
+    <div className="flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-card rounded-lg shadow-md p-6 text-center">
+        <h1 className="text-2xl font-semibold text-foreground">Link Expired or Invalid</h1>
+        <p className="mt-2 text-muted-foreground">
           Your confirmation link is no longer valid. Request a new link or sign up again.
         </p>
 
-        <div className="mb-6">
+        <div className="mt-4">
           <input
             type="email"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="w-full px-4 py-2 border border-input rounded-md bg-muted text-foreground focus:ring-2 focus:ring-primary focus:border-primary transition"
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -48,24 +50,23 @@ export default function ConfirmExpiredPage() {
           />
         </div>
 
-        <button
+        <Button
           onClick={handleResendConfirmation}
           disabled={loading || !email}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
+          className="w-full mt-4"
         >
-          {loading ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
+          {loading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}
           {loading ? 'Resending...' : 'Request New Confirmation'}
-        </button>
+        </Button>
 
-        {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
+        {message && <p className="mt-2 text-sm text-muted-foreground">{message}</p>}
 
         <div className="mt-6">
-          <p className="text-gray-600">Or, create a new account:</p>
-          <Link
-            href="/auth/signup"
-            className="mt-2 inline-block px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            Sign Up Again
+          <p className="text-muted-foreground">Or, create a new account:</p>
+          <Link href="/auth/signup">
+            <Button variant="secondary" className="mt-2 w-full">
+              Sign Up Again
+            </Button>
           </Link>
         </div>
       </div>
