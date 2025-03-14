@@ -40,14 +40,8 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const refreshUserProfile = async () => {
     try {
-      console.log('Checking user profile in context...');
-      if (userProfile) {
-        console.log('User profile already stored:', userProfile);
-        return;
-      }
-
-      console.log('Fetching user session...');
       const sessionData = await ensureUserProfile();
+      console.log('Fetched user session:', sessionData);
       if (!sessionData) {
         console.log('No session found.');
         setUserProfile(null);
@@ -57,7 +51,6 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       console.log('Fetching user profile from Supabase...');
       const profile = sessionData.profile;
-
       if (profile) {
         console.log('Fetched user profile:', profile);
         const { id, display_name, goals, avatar_url, has_set_initial_goals } = profile;
@@ -84,6 +77,11 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
       localStorage.removeItem('userProfile');
     }
   };
+
+  // Ensure refreshUserProfile runs on mount
+  useEffect(() => {
+    refreshUserProfile();
+  }, []);
 
   const clearUserProfile = () => {
     setUserProfile(null);
