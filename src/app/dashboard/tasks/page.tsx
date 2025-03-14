@@ -7,7 +7,7 @@ import TasksManager from '@/components/TasksManager';
 import { GoalSettingModal } from '@/components/GoalSettingModal';
 
 export default function TasksPage() {
-  const { userProfile, refreshUserProfile } = useUserProfile();
+  const { userProfile } = useUserProfile();
   const [showGoalModal, setShowGoalModal] = useState(false);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function TasksPage() {
         onClose={() => setShowGoalModal(false)}
         userProfile={userProfile}
       />
-      {userProfile.has_set_initial_goals && <TasksManager userProfile={userProfile} />}
+      {userProfile.has_set_initial_goals && <TasksManager />}
     </section>
   );
 }

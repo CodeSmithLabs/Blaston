@@ -8,7 +8,6 @@ import { useUserProfile } from '@/context/UserProfileContext';
 
 export default function TasksManager() {
   const { userProfile, updateProfileField } = useUserProfile();
-  console.log('profile goals:', userProfile.goals);
   const [newTask, setNewTask] = useState('');
   const [selectedGoal, setSelectedGoal] = useState(userProfile?.goals[0]?.id || '');
   const [error, setError] = useState<string | null>(null);
