@@ -17,12 +17,14 @@ interface UserProfileContextProps {
   userProfile: UserProfile | null;
   refreshUserProfile: () => Promise<void>;
   clearUserProfile: () => void;
+  updateDisplayName: (newName: string) => void;
 }
 
 const UserProfileContext = createContext<UserProfileContextProps>({
   userProfile: null,
   refreshUserProfile: async () => {},
-  clearUserProfile: () => {}
+  clearUserProfile: () => {},
+  updateDisplayName: () => {}
 });
 
 export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -30,6 +32,7 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const refreshUserProfile = async () => {
     try {
+      console.log('Fetching profile using ensureUserProfile...');
       const sessionData = await ensureUserProfile();
 
       if (!sessionData?.user || !sessionData?.profile) {
@@ -50,7 +53,6 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       setUserProfile(userProfileData);
       localStorage.setItem('userProfile', JSON.stringify(userProfileData));
-
       console.log('User profile set:', userProfileData);
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -61,14 +63,28 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const clearUserProfile = () => {
     setUserProfile(null);
     localStorage.removeItem('userProfile');
+    console.log('User profile cleared.');
+  };
+
+  const updateDisplayName = (newName: string) => {
+    setUserProfile((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, display_name: newName };
+      localStorage.setItem('userProfile', JSON.stringify(updated));
+      console.log('Display name updated in context:', updated);
+      return updated;
+    });
   };
 
   useEffect(() => {
+    // Refresh the profile on mount
     refreshUserProfile();
   }, []);
 
   return (
-    <UserProfileContext.Provider value={{ userProfile, refreshUserProfile, clearUserProfile }}>
+    <UserProfileContext.Provider
+      value={{ userProfile, refreshUserProfile, clearUserProfile, updateDisplayName }}
+    >
       {children}
     </UserProfileContext.Provider>
   );

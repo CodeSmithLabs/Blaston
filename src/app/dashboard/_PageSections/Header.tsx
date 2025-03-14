@@ -20,7 +20,7 @@ interface HeaderProps {
 
 export default function Header({ onToggleSidebar }: HeaderProps) {
   const router = useRouter();
-  const { userProfile, setUserProfile } = useUserProfile();
+  const { userProfile } = useUserProfile();
 
   const handleLogout = async () => {
     const { error } = await SupabaseSignOut();
@@ -42,7 +42,6 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
 
       <EditableDisplayName
         initialName={userProfile?.display_name || userProfile?.email?.split('@')[0] || 'Tasks'}
-        setUserProfile={setUserProfile}
       />
 
       <div className="flex items-center gap-2">
@@ -70,19 +69,14 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
   );
 }
 
-function EditableDisplayName({
-  initialName,
-  setUserProfile
-}: {
-  initialName: string;
-  setUserProfile: (profile: any) => void;
-}) {
+function EditableDisplayName({ initialName }: { initialName: string }) {
+  const { updateDisplayName } = useUserProfile();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(initialName);
 
   const handleSave = () => {
     setEditing(false);
-    setUserProfile((prev: any) => ({ ...prev, display_name: value, email: prev.email })); // Ensure email is not modified
+    updateDisplayName(value);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

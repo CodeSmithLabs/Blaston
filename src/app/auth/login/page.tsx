@@ -1,4 +1,4 @@
-//auth/login/page.tsx
+// app/auth/login/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -29,7 +29,7 @@ import { Icons } from '@/components/Icons';
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { setUserProfile } = useUserProfile();
+  const { refreshUserProfile } = useUserProfile();
 
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
@@ -57,9 +57,10 @@ export default function LoginPage() {
         setError('email', { type: 'root.serverError', message: data.error });
         return;
       }
+
       if (data.profile) {
         toast.success('Login successful!');
-        setUserProfile(data.profile);
+        await refreshUserProfile(); // Refresh the context profile from Supabase
         router.push(config.redirects.toDashboard);
       } else {
         toast.info('Hold on! We’re setting things up for you…');
