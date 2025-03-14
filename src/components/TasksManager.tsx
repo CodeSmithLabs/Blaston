@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getSupabaseUserSession } from '@/lib/API/Services/supabase/user';
 import {
   loadGoals,
   addManualTask,
@@ -12,22 +11,17 @@ import {
 } from '@/app/actions/tasks';
 import { Trash2Icon } from 'lucide-react';
 
-export default function TasksManager() {
+export default function TasksManager({ userProfile }: { userProfile: any }) {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [newTask, setNewTask] = useState('');
-  const [selectedGoal, setSelectedGoal] = useState<string>('');
-  const [user, setUser] = useState<any>(null);
+  const [selectedGoal, setSelectedGoal] = useState<string>(userProfile.goals[0]?.id || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const userData = await getSupabaseUserSession(true);
-        if (!userData?.user) throw new Error('User session not found');
-
-        setUser(userData.user);
-        const goalsData = await loadGoals(userData.user.id);
+        const goalsData = await loadGoals(userProfile.id);
         setGoals(goalsData);
         setSelectedGoal(goalsData[0]?.id || '');
       } catch (error) {
@@ -39,16 +33,16 @@ export default function TasksManager() {
     };
 
     loadData();
-  }, []);
+  }, [userProfile.id]);
 
   const handleAddTask = async () => {
-    if (!newTask.trim() || !selectedGoal || !user?.id) return;
+    if (!newTask.trim() || !selectedGoal || !userProfile.id) return;
 
     try {
       setError(null);
-      await addManualTask(selectedGoal, newTask.trim(), user.id);
+      await addManualTask(selectedGoal, newTask.trim(), userProfile.id);
 
-      const updatedGoals = await loadGoals(user.id);
+      const updatedGoals = await loadGoals(userProfile.id);
       setGoals(updatedGoals);
       setNewTask('');
     } catch (error) {
@@ -58,13 +52,13 @@ export default function TasksManager() {
   };
 
   const handleRemoveTask = async (goalId: string, taskId: string) => {
-    if (!user?.id) return;
+    if (!userProfile.id) return;
 
     try {
       setError(null);
-      await removeTask(goalId, taskId, user.id);
+      await removeTask(goalId, taskId, userProfile.id);
 
-      const updatedGoals = await loadGoals(user.id);
+      const updatedGoals = await loadGoals(userProfile.id);
       setGoals(updatedGoals);
     } catch (error) {
       console.error('Error removing task:', error);
@@ -73,13 +67,13 @@ export default function TasksManager() {
   };
 
   const handleToggleTask = async (goalId: string, taskId: string) => {
-    if (!user?.id) return;
+    if (!userProfile.id) return;
 
     try {
       setError(null);
-      await toggleTaskCompletion(goalId, taskId, user.id);
+      await toggleTaskCompletion(goalId, taskId, userProfile.id);
 
-      const updatedGoals = await loadGoals(user.id);
+      const updatedGoals = await loadGoals(userProfile.id);
       setGoals(updatedGoals);
     } catch (error) {
       console.error('Error toggling task:', error);

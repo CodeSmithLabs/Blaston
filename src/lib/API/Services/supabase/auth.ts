@@ -1,4 +1,4 @@
-//lib/API/Services/supabase/auth.ts
+// lib/API/Services/supabase/auth.ts
 'use server';
 
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
@@ -19,9 +19,10 @@ export async function SupabaseSignIn(email: string, password: string): Promise<A
   }
 
   if (data?.session) {
+    // Retrieve the user profile from the database
     const profile = await getUserProfile(data.user.id);
     if (profile) {
-      storeSessionCookies(data.session);
+      storeSessionCookies(data.session, profile);
     } else {
       clearSessionCookies();
     }
@@ -44,8 +45,6 @@ export async function SupabaseSignUp(email: string, password: string): Promise<A
 export async function SupabaseSignOut(): Promise<{ error: { message: string } | null }> {
   const supabase = SupabaseServerClient();
   const { error } = await supabase.auth.signOut();
-
   clearSessionCookies();
-
   return { error };
 }

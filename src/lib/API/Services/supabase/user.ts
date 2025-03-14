@@ -1,4 +1,5 @@
 // lib/API/Services/supabase/user.ts
+'use server';
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 
 export async function getSupabaseUserSession() {

@@ -3,6 +3,8 @@
 
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import { v4 as uuid } from 'uuid';
+import { cookies } from 'next/headers';
+import { updateProfileCookie } from '@/lib/API/auth/cookies';
 
 export interface Task {
   id: string;

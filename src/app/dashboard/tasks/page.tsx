@@ -2,24 +2,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useUserProfile } from '@/context/UserProfileContext';
 import TasksManager from '@/components/TasksManager';
 import { GoalSettingModal } from '@/components/GoalSettingModal';
 import { ensureUserProfile } from '@/lib/API/Services/supabase/user';
 
 export default function TasksPage() {
   const [showGoalModal, setShowGoalModal] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      const data = await ensureUserProfile();
-      setUserProfile(data.profile);
-      setShowGoalModal(!data.profile.has_set_initial_goals);
+    ensureUserProfile().then((profile) => {
+      setUserProfile(profile);
       setLoading(false);
-    }
-
-    fetchData();
+      console.log('profile', profile);
+    });
   }, []);
 
   if (loading) return <div className="py-4 lg:px-16">Loading...</div>;
@@ -27,8 +25,12 @@ export default function TasksPage() {
   return (
     <section className="py-4 lg:px-16 bg-card text-card-foreground">
       <h2 className="text-2xl font-serif font-bold mb-4">Daily Tasks</h2>
-      <GoalSettingModal isOpen={showGoalModal} onClose={() => setShowGoalModal(false)} />
-      {userProfile?.has_set_initial_goals && <TasksManager />}
+      <GoalSettingModal
+        isOpen={showGoalModal}
+        onClose={() => setShowGoalModal(false)}
+        userProfile={userProfile}
+      />
+      {userProfile?.has_set_initial_goals && <TasksManager userProfile={userProfile} />}
     </section>
   );
 }
