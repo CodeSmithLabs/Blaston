@@ -4,7 +4,6 @@
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import { storeSessionCookies, clearSessionCookies } from '@/lib/API/auth/cookies';
 import { getUserProfile } from './user';
-import { useUserProfile } from '@/context/UserProfileContext';
 
 type AuthResult = {
   error: { message: string } | null;
@@ -14,7 +13,6 @@ type AuthResult = {
 export async function SupabaseSignIn(email: string, password: string): Promise<AuthResult> {
   const supabase = SupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  const { setUserProfile } = useUserProfile();
 
   if (error) {
     return { error: { message: error.message }, data: null };
