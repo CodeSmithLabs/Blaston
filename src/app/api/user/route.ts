@@ -5,7 +5,7 @@ import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 
 export async function PATCH(request: Request) {
   try {
-    const user = await getSupabaseUserSession(true);
+    const user = await getSupabaseUserSession();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { display_name } = await request.json();
