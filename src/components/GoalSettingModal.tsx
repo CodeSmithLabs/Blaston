@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { saveAITasks } from '@/app/actions/tasks';
+import { useUserProfile } from '@/context/UserProfileContext';
 import { TrashIcon } from 'lucide-react';
 
 interface GoalSettingModalProps {
@@ -12,6 +13,7 @@ interface GoalSettingModalProps {
 }
 
 export const GoalSettingModal = ({ isOpen, onClose, userProfile }: GoalSettingModalProps) => {
+  const { updateProfileField, syncProfileWithSupabase } = useUserProfile();
   const [goals, setGoals] = useState<string[]>([]);
   const [currentGoal, setCurrentGoal] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -24,7 +26,6 @@ export const GoalSettingModal = ({ isOpen, onClose, userProfile }: GoalSettingMo
     setError(null);
 
     try {
-      // Call the API to generate tasks
       const taskResponse = await fetch('/api/generate-tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -34,18 +35,19 @@ export const GoalSettingModal = ({ isOpen, onClose, userProfile }: GoalSettingMo
       if (!taskResponse.ok) throw new Error(`Task generation failed: ${taskResponse.status}`);
 
       const { tasks } = await taskResponse.json();
-      if (!tasks || !Array.isArray(tasks))
-        throw new Error('Invalid tasks data returned from AI generation.');
+      if (!tasks || !Array.isArray(tasks)) throw new Error('Invalid tasks data returned.');
 
-      // Prepare goals data for saving
       const goalsData = goals.map((goal, index) => ({
         goal,
         tasks: Array.isArray(tasks[index]) ? tasks[index] : []
       }));
 
-      // Save tasks to Supabase (this also updates the session cookie)
       const success = await saveAITasks(goalsData, userProfile.id);
       if (!success) throw new Error('Failed to save tasks');
+
+      // ✅ Update profile to mark initial goals as set
+      updateProfileField('has_set_initial_goals', true);
+      await syncProfileWithSupabase();
 
       onClose();
     } catch (error: any) {

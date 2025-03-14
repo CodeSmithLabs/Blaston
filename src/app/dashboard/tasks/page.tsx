@@ -1,14 +1,20 @@
 // dashboard/tasks/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUserProfile } from '@/context/UserProfileContext';
 import TasksManager from '@/components/TasksManager';
 import { GoalSettingModal } from '@/components/GoalSettingModal';
 
 export default function TasksPage() {
-  const { userProfile } = useUserProfile();
+  const { userProfile, refreshUserProfile } = useUserProfile();
   const [showGoalModal, setShowGoalModal] = useState(false);
+
+  useEffect(() => {
+    if (userProfile && !userProfile.has_set_initial_goals) {
+      setShowGoalModal(true);
+    }
+  }, [userProfile]);
 
   if (!userProfile) return <div className="py-4 lg:px-16">Loading...</div>;
 
