@@ -2,6 +2,7 @@
 'use server';
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
 import { cookies } from 'next/headers';
+import { UserProfile } from '@/lib/types/types';
 
 export async function getSupabaseUserSession() {
   const supabase = SupabaseServerClient();
@@ -51,4 +52,15 @@ export async function createUserProfile(userId: string, email: string) {
     goals: []
   });
   return error;
+}
+
+export async function updateUserProfile(userId: string, updates: Partial<Omit<UserProfile, 'id'>>) {
+  const supabase = SupabaseServerClient();
+
+  const { error } = await supabase.from('user_profiles').update(updates).eq('id', userId);
+
+  if (error) {
+    console.error('Error updating user profile:', error);
+    throw new Error('Failed to update user profile');
+  }
 }
