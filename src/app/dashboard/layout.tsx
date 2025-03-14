@@ -1,13 +1,9 @@
 // app/dashboard/layout.tsx
+'use client';
+
 import DashboardShell from '@/components/DashboardShell';
 import { LayoutProps } from '@/lib/types/types';
-import { ToastContainer } from 'react-toastify';
 
 export default function DashboardLayout({ children }: LayoutProps) {
-  return (
-    <>
-      <ToastContainer />
-      <DashboardShell>{children}</DashboardShell>
-    </>
-  );
+  return <DashboardShell>{children}</DashboardShell>;
 }

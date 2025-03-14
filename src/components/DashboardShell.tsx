@@ -6,12 +6,10 @@ import SideBar from '@/app/dashboard/_PageSections/SideBar';
 import Header from '@/app/dashboard/_PageSections/Header';
 
 interface DashboardShellProps {
-  displayName?: string;
-  email?: string;
   children: React.ReactNode;
 }
 
-export default function DashboardShell({ displayName, email, children }: DashboardShellProps) {
+export default function DashboardShell({ children }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -40,7 +38,7 @@ export default function DashboardShell({ displayName, email, children }: Dashboa
       )}
 
       <div className="flex-1 flex flex-col">
-        <Header onToggleSidebar={toggleSidebar} displayName={displayName} email={email} />
+        <Header onToggleSidebar={toggleSidebar} />
         <main className="p-6">{children}</main>
       </div>
     </div>

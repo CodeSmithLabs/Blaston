@@ -2,11 +2,12 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getSupabaseUserSession, getUserProfile } from '@/lib/API/Services/supabase/user';
+import { ensureUserProfile } from '@/lib/API/Services/supabase/user';
 
 export interface UserProfile {
   id: string;
   display_name: string;
+  email: string;
   goals: any[];
   avatar_url: string;
   has_set_initial_goals: boolean;
@@ -29,27 +30,75 @@ const UserProfileContext = createContext<UserProfileContextProps>({
 export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
+  // Load from localStorage on mount
+  useEffect(() => {
+    const storedProfile = localStorage.getItem('userProfile');
+    if (storedProfile) {
+      setUserProfile(JSON.parse(storedProfile));
+    }
+  }, []);
+
   const refreshUserProfile = async () => {
     try {
-      const sessionData = await getSupabaseUserSession();
-      if (!sessionData) {
-        setUserProfile(null);
+      console.log('Checking user profile in context...');
+      if (userProfile) {
+        console.log('User profile already stored:', userProfile);
         return;
       }
-      const profile = await getUserProfile(sessionData.user.id);
-      setUserProfile(profile);
+
+      console.log('Fetching user session...');
+      const sessionData = await ensureUserProfile();
+      if (!sessionData) {
+        console.log('No session found.');
+        setUserProfile(null);
+        localStorage.removeItem('userProfile');
+        return;
+      }
+
+      console.log('Fetching user profile from Supabase...');
+      const profile = sessionData.profile;
+
+      if (profile) {
+        console.log('Fetched user profile:', profile);
+        const { id, display_name, goals, avatar_url, has_set_initial_goals } = profile;
+        const email = sessionData.user.email;
+
+        const userProfileData: UserProfile = {
+          id,
+          display_name,
+          email,
+          goals,
+          avatar_url,
+          has_set_initial_goals
+        };
+        setUserProfile(userProfileData);
+        localStorage.setItem('userProfile', JSON.stringify(userProfileData));
+      } else {
+        console.log('User profile not found.');
+        setUserProfile(null);
+        localStorage.removeItem('userProfile');
+      }
     } catch (error) {
       console.error('Error fetching user profile:', error);
       setUserProfile(null);
+      localStorage.removeItem('userProfile');
     }
   };
 
   const clearUserProfile = () => {
     setUserProfile(null);
+    localStorage.removeItem('userProfile');
   };
 
   useEffect(() => {
-    refreshUserProfile();
+    const token = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith('sb-access-token='))
+      ?.split('=')[1];
+
+    if (token) {
+      refreshUserProfile();
+    }
   }, []);
 
   return (

@@ -5,8 +5,6 @@ import authConfig from './lib/config/auth';
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('sb-access-token')?.value;
-  const profileCookie = request.cookies.get('user-profile')?.value;
-  console.log('profileCookie', profileCookie);
   // If no token, redirect users trying to access /dashboard to login
   if (!token) {
     if (request.nextUrl.pathname.startsWith('/dashboard')) {

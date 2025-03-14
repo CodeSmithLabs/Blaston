@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useUserProfile } from '@/context/UserProfileContext';
 
 import { authFormSchema, authFormValues } from '@/lib/types/validations';
 import config from '@/lib/config/auth';
@@ -27,6 +28,7 @@ import { Icons } from '@/components/Icons';
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const { setUserProfile } = useUserProfile();
 
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
@@ -48,14 +50,16 @@ export default function LoginPage() {
       });
 
       const data = await response.json();
+
       if (!response.ok) {
         reset({ email: values.email, password: '' });
         setError('email', { type: 'root.serverError', message: data.error });
         return;
       }
-
+      console.log('the profile data is', data.profile);
       if (data.profile) {
         toast.success('Login successful!');
+        setUserProfile(data.profile);
         router.push(config.redirects.toDashboard);
       } else {
         toast.info('Hold on! We’re setting things up for you…');
