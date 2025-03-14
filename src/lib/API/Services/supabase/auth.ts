@@ -24,7 +24,6 @@ export async function SupabaseSignIn(email: string, password: string): Promise<A
     const profile = await getUserProfile(data.user.id);
     if (profile) {
       storeSessionCookies(data.session, profile);
-      setUserProfile(profile);
     } else {
       clearSessionCookies();
     }
