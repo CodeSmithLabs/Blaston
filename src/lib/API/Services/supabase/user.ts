@@ -1,12 +1,29 @@
 // lib/API/Services/supabase/user.ts
 'use server';
 import { SupabaseServerClient } from '@/lib/API/Services/init/supabase';
+import { cookies } from 'next/headers';
 
 export async function getSupabaseUserSession() {
   const supabase = SupabaseServerClient();
-  const { data, error } = await supabase.auth.getSession();
-  if (error || !data?.session) return null;
-  return { session: data.session, user: data.session.user };
+
+  // Get tokens from cookies
+  const access_token = cookies().get('sb-access-token')?.value;
+  const refresh_token = cookies().get('sb-refresh-token')?.value;
+
+  if (!access_token || !refresh_token) {
+    console.log('No tokens found in cookies');
+    return null;
+  }
+
+  // Restore session manually
+  const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
+
+  if (error) {
+    console.error('Error restoring session:', error);
+    return null;
+  }
+
+  return { session: data.session, user: data.session?.user };
 }
 
 export async function getUserProfile(userId: string) {
@@ -20,10 +37,10 @@ export async function getUserProfile(userId: string) {
 }
 
 export async function ensureUserProfile() {
-  const sessionData = await getSupabaseUserSession();
-  if (!sessionData) return null;
-  const profile = await getUserProfile(sessionData.user.id);
-  return { ...sessionData, profile };
+  const userData = await getSupabaseUserSession();
+  if (!userData) return null;
+  const profile = await getUserProfile(userData.user.id);
+  return { ...userData, profile };
 }
 
 export async function createUserProfile(userId: string, email: string) {

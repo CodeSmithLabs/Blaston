@@ -16,7 +16,7 @@ export default function TasksPage() {
     ensureUserProfile().then((profile) => {
       setUserProfile(profile);
       setLoading(false);
-      console.log('Fetched user profile:', profile);
+      // console.log('Fetched user profile:', profile);
     });
   }, []);
 

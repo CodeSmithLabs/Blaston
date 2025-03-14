@@ -15,14 +15,12 @@ export interface UserProfile {
 
 interface UserProfileContextProps {
   userProfile: UserProfile | null;
-  setUserProfile: (profile: UserProfile | null) => void;
   refreshUserProfile: () => Promise<void>;
   clearUserProfile: () => void;
 }
 
 const UserProfileContext = createContext<UserProfileContextProps>({
   userProfile: null,
-  setUserProfile: () => {},
   refreshUserProfile: async () => {},
   clearUserProfile: () => {}
 });
@@ -30,58 +28,35 @@ const UserProfileContext = createContext<UserProfileContextProps>({
 export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const storedProfile = localStorage.getItem('userProfile');
-    if (storedProfile) {
-      setUserProfile(JSON.parse(storedProfile));
-    }
-  }, []);
-
   const refreshUserProfile = async () => {
     try {
       const sessionData = await ensureUserProfile();
-      console.log('Fetched user session:', sessionData);
-      if (!sessionData) {
-        console.log('No session found.');
-        setUserProfile(null);
-        localStorage.removeItem('userProfile');
+
+      if (!sessionData?.user || !sessionData?.profile) {
+        console.log('No session or user profile found.');
+        clearUserProfile();
         return;
       }
 
-      console.log('Fetching user profile from Supabase...');
-      const profile = sessionData.profile;
-      if (profile) {
-        console.log('Fetched user profile:', profile);
-        const { id, display_name, goals, avatar_url, has_set_initial_goals } = profile;
-        const email = sessionData.user.email;
+      const { user, profile } = sessionData;
+      const userProfileData: UserProfile = {
+        id: user.id,
+        display_name: profile.display_name,
+        email: user.email,
+        goals: profile.goals,
+        avatar_url: profile.avatar_url,
+        has_set_initial_goals: profile.has_set_initial_goals
+      };
 
-        const userProfileData: UserProfile = {
-          id,
-          display_name,
-          email,
-          goals,
-          avatar_url,
-          has_set_initial_goals
-        };
-        setUserProfile(userProfileData);
-        localStorage.setItem('userProfile', JSON.stringify(userProfileData));
-      } else {
-        console.log('User profile not found.');
-        setUserProfile(null);
-        localStorage.removeItem('userProfile');
-      }
+      setUserProfile(userProfileData);
+      localStorage.setItem('userProfile', JSON.stringify(userProfileData));
+
+      console.log('User profile set:', userProfileData);
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      setUserProfile(null);
-      localStorage.removeItem('userProfile');
+      clearUserProfile();
     }
   };
-
-  // Ensure refreshUserProfile runs on mount
-  useEffect(() => {
-    refreshUserProfile();
-  }, []);
 
   const clearUserProfile = () => {
     setUserProfile(null);
@@ -89,20 +64,11 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
   };
 
   useEffect(() => {
-    const token = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('sb-access-token='))
-      ?.split('=')[1];
-
-    if (token) {
-      refreshUserProfile();
-    }
+    refreshUserProfile();
   }, []);
 
   return (
-    <UserProfileContext.Provider
-      value={{ userProfile, setUserProfile, refreshUserProfile, clearUserProfile }}
-    >
+    <UserProfileContext.Provider value={{ userProfile, refreshUserProfile, clearUserProfile }}>
       {children}
     </UserProfileContext.Provider>
   );

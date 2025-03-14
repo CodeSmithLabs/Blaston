@@ -1,3 +1,4 @@
+//auth/login/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -56,7 +57,6 @@ export default function LoginPage() {
         setError('email', { type: 'root.serverError', message: data.error });
         return;
       }
-      console.log('the profile data is', data.profile);
       if (data.profile) {
         toast.success('Login successful!');
         setUserProfile(data.profile);
