@@ -3,24 +3,13 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ensureUserProfile, updateUserProfile } from '@/lib/API/Services/supabase/user';
-
-export interface UserProfile {
-  id: string;
-  display_name: string;
-  email: string;
-  goals: any[];
-  avatar_url: string;
-  has_set_initial_goals: boolean;
-}
+import { ProfileT } from '@/lib/types/supabase';
 
 interface UserProfileContextProps {
-  userProfile: UserProfile | null;
+  userProfile: (ProfileT & { email: string }) | null;
   refreshUserProfile: () => Promise<void>;
   clearUserProfile: () => void;
-  updateProfileField: <K extends keyof Omit<UserProfile, 'id' | 'email'>>(
-    field: K,
-    value: UserProfile[K]
-  ) => void;
+  updateProfileField: <K extends keyof Omit<ProfileT, 'id'>>(field: K, value: ProfileT[K]) => void;
   syncProfileWithSupabase: () => Promise<void>;
 }
 
@@ -33,8 +22,8 @@ const UserProfileContext = createContext<UserProfileContextProps>({
 });
 
 export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [pendingUpdates, setPendingUpdates] = useState<Partial<UserProfile> | null>(null);
+  const [userProfile, setUserProfile] = useState<(ProfileT & { email: string }) | null>(null);
+  const [pendingUpdates, setPendingUpdates] = useState<Partial<ProfileT> | null>(null);
 
   // Fetch user profile from Supabase or local storage
   const refreshUserProfile = async () => {
@@ -48,13 +37,9 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
 
       const { user, profile } = sessionData;
-      const userProfileData: UserProfile = {
-        id: user.id,
-        display_name: profile.display_name,
-        email: user.email,
-        goals: profile.goals,
-        avatar_url: profile.avatar_url,
-        has_set_initial_goals: profile.has_set_initial_goals
+      const userProfileData = {
+        ...profile,
+        email: user.email
       };
 
       setUserProfile(userProfileData);
@@ -74,9 +59,9 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
   };
 
   // Update specific profile fields and queue updates if offline
-  const updateProfileField = <K extends keyof Omit<UserProfile, 'id' | 'email'>>(
+  const updateProfileField = <K extends keyof Omit<ProfileT, 'id'>>(
     field: K,
-    value: UserProfile[K]
+    value: ProfileT[K]
   ) => {
     setUserProfile((prev) => {
       if (!prev) return prev;
