@@ -57,7 +57,7 @@ export async function createUserProfile(userId: string, email: string) {
 export async function updateUserProfile(userId: string, updates: Partial<Omit<ProfileT, 'id'>>) {
   const supabase = SupabaseServerClient();
 
-  const { error } = await supabase.from('user_profiles').update(updates).eq('id', userId);
+  const { error } = await supabase.from('user_profiles').update(updates).eq('id', userId).select();
 
   if (error) {
     console.error('Error updating user profile:', error);
