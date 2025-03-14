@@ -2,11 +2,12 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getSupabaseUserSession, getUserProfile } from '@/lib/API/Services/supabase/user';
 
 export interface UserProfile {
   id: string;
   display_name: string;
-  goals: any[]; // Extend as needed
+  goals: any[];
   avatar_url: string;
   has_set_initial_goals: boolean;
 }
@@ -30,15 +31,15 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const refreshUserProfile = async () => {
     try {
-      const res = await fetch('/api/profile');
-      if (res.ok) {
-        const data = await res.json();
-        setUserProfile(data.profile);
-      } else {
+      const sessionData = await getSupabaseUserSession();
+      if (!sessionData) {
         setUserProfile(null);
+        return;
       }
+      const profile = await getUserProfile(sessionData.user.id);
+      setUserProfile(profile);
     } catch (error) {
-      console.error('Error refreshing profile', error);
+      console.error('Error fetching user profile:', error);
       setUserProfile(null);
     }
   };
@@ -61,3 +62,4 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
 };
 
 export const useUserProfile = () => useContext(UserProfileContext);
+export default UserProfileProvider;

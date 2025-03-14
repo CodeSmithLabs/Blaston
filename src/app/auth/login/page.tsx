@@ -54,7 +54,7 @@ export default function LoginPage() {
         return;
       }
 
-      if (data.profileExists) {
+      if (data.profile) {
         toast.success('Login successful!');
         router.push(config.redirects.toDashboard);
       } else {
