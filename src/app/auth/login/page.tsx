@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { useUserProfile } from '@/context/UserProfileContext';
 
 import { authFormSchema, authFormValues } from '@/lib/types/validations';
@@ -25,9 +23,11 @@ import {
 } from '@/components/ui/Card';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/Form';
 import { Icons } from '@/components/Icons';
+import { ProfileCreationLoader } from '@/components/ProfileCreationLoader';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false); // State to control the loader
   const router = useRouter();
   const { refreshUserProfile } = useUserProfile();
 
@@ -59,11 +59,10 @@ export default function LoginPage() {
       }
 
       if (data.profile) {
-        toast.success('Login successful!');
-        await refreshUserProfile(); // Refresh the context profile from Supabase
+        await refreshUserProfile();
         router.push(config.redirects.toDashboard);
       } else {
-        toast.info('Hold on! We’re setting things up for you…');
+        setIsCreatingProfile(true);
 
         const profileResponse = await fetch('/api/auth/create-profile', {
           method: 'POST',
@@ -73,15 +72,16 @@ export default function LoginPage() {
         });
 
         if (profileResponse.ok) {
-          toast.success('All set! Redirecting you now...');
+          await refreshUserProfile();
           router.push(config.redirects.toDashboard);
         } else {
-          toast.error('Something went wrong while setting up your profile. Try again later.');
+          setIsCreatingProfile(false);
+          console.error('Profile creation failed');
         }
       }
     } catch (error: any) {
+      setIsCreatingProfile(false);
       console.error('Login error:', error);
-      toast.error('An unexpected error occurred');
     }
   };
 
@@ -169,6 +169,9 @@ export default function LoginPage() {
           </div>
         </CardFooter>
       </Card>
+
+      {/* Show the loader when profile is being created */}
+      {isCreatingProfile && <ProfileCreationLoader />}
     </div>
   );
 }
