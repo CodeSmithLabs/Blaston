@@ -30,7 +30,7 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       const sessionData = await ensureUserProfile();
 
-      if (!sessionData?.user || !sessionData?.profile) {
+      if (!sessionData) {
         console.log('No session or user profile found.');
         clearUserProfile();
         return;

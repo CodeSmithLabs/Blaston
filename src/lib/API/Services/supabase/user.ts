@@ -41,6 +41,7 @@ export async function ensureUserProfile() {
   const userData = await getSupabaseUserSession();
   if (!userData) return null;
   const profile = await getUserProfile(userData.user.id);
+  if (!profile) return null;
   return { ...userData, profile };
 }
 
